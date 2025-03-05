@@ -1,0 +1,65 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "databricks",
+    "name": "dolly-v2-12b",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "databricks/dolly-v2-12b",
+                "--enforce-eager",
+                "--disable-custom-all-reduce",
+                "--trust-remote-code",
+                "--max-model-len",
+                "200",
+                "--gpu-memory-utilization",
+                "0.99",
+                "--tensor-parallel-size=2"
+            ],
+            "resources": {
+                "CPU": 20000,
+                "Mem": 90000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 2,
+                    "vRam": 14000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "What is the capital of USA?",
+                "path": "v1/completions",
+                "body": {
+                    "model": "databricks/dolly-v2-12b",
+                    "max_tokens": "100",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

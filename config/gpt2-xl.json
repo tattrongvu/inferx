@@ -1,0 +1,61 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "openai-community",
+    "name": "gpt2-xl",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "openai-community/gpt2-xl",
+                "--disable-custom-all-reduce",
+                "--enforce-eager",
+                "--max-model-len",
+                "800"
+            ],
+            "resources": {
+                "CPU": 12000,
+                "Mem": 18000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 12000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "Here is a recipe for vegan banana bread:",
+                "path": "v1/completions",
+                "body": {
+                    "model": "openai-community/gpt2-xl",
+                    "max_tokens": "600",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

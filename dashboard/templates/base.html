@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title> InferX AI Function </title>
+    <style>
+        nav a {
+            color: #d64161;
+            font-size: 3em;
+            margin-left: 50px;
+            text-decoration: none;
+        }
+
+        .audit {
+            padding: 20px;
+            margin: 10px;
+            background-color: #f7f4f4;
+        }
+
+        .review {
+            margin-left: 50px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <table style="border-collapse: collapse; border: 2px solid rgba(255, 255, 255, 0.5);">
+        <td style="border: none;"><img src="doc/logo.png" alt="logo" width="100" height="100"></td>
+        <td style="border: none;">
+            <h1>InferX AI Function Platform (Lambda Function for Inference)</h1>
+            <h2>&nbsp;&nbsp;&nbsp;&nbsp;-- &nbsp; Serve tens models in one box with ultra-fast (<2 sec) cold start
+                    (contact: support@inferx.net)</</h2>
+        </td>
+    </table>
+
+    <hr>
+    <nav>
+        <a href="{{ hosturl }}intro?name=home.md"> Introduction </a>
+        <a href="{{ hosturl }}listfunc"> Models </a>
+        <a href="{{ hosturl }}listpod"> Pods </a>
+        <a href="{{ hosturl }}listsnapshot"> Snapshots </a>
+        <a href="{{ hosturl }}listnode"> Nodes </a>
+    </nav>
+    <hr>
+    <div class="content">
+        {% block content %} {% endblock %}
+    </div>
+</body>
+
+</html>

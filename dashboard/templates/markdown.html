@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<body>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+    </style>
+    <table style="width:60%">
+        <tr>
+            <td>{{ md_content|safe }}</td>
+        </tr>
+    </table>
+</body>
+
+
+
+
+{{ log | safe }}
+{% endblock %}

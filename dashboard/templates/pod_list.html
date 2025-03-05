@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Pods</h2>
+
+<style>
+    table,
+    th,
+    td {
+        border: 1px solid black;
+    }
+</style>
+<table style="width:100%">
+    <tr>
+        <th rowspan="2">tenant</th>
+        <th rowspan="2">namespace</th>
+        <th rowspan="2">pod name</th>
+        <th rowspan="2">state</th>
+        <th rowspan="2">Node name</th>
+        <th rowspan="2">Req Gpu Count </th>
+        <th rowspan="2">Req Gpu vRam </th>
+        <th rowspan="2">Type</th>
+        <th colspan="3">Standby</th>
+        <th rowspan="2">allocated GPU vRam (MB)</th>
+        <th rowspan="2">allocated GPU Slots</th>
+    </tr>
+
+    <tr>
+        <th>gpu</th>
+        <th>pageable</th>
+        <th>pinned</th>
+
+    </tr>
+    {% for pod in pods %}
+    <tr>
+        <td><a href="{{ hosturl }}listpod?tenant={{ pod["tenant"] }}">
+                {{ pod["tenant"] }}
+            </a></td>
+        <td><a href="{{ hosturl }}listpod?tenant={{ pod["tenant"] }}&&namespace={{ pod["namespace"]}}">
+                {{ pod["namespace"] }}
+            </a></td>
+        <td><a href="{{ hosturl }}pod?tenant={{ pod["tenant"] }}&&namespace={{ pod["namespace"] }}&&name={{ pod["name"]
+                }}">{{
+                pod["name"] }}</a></td>
+        <td>{{ pod["object"]["status"]["state"] }}</td>
+        <td>{{ pod["object"]["spec"]["allocResources"]["nodename"] }}</td>
+        <td>{{ pod["object"]["spec"]["reqResources"]["GPU"]["Count"] }}</td>
+        <td>{{ pod["object"]["spec"]["reqResources"]["GPU"]["vRam"] }} MB</td>
+        <td>{{ pod["object"]["spec"]["create_type"] }}</td>
+        <td>
+            {{ pod["object"]["spec"]["standby"]["gpu"] }} :
+            {{ pod["object"]["spec"]["snapshotStandbyInfo"]["gpu"]// (1024 *1024)}} MB
+        </td>
+        <td>{{ pod["object"]["spec"]["standby"]["pageable"] }} :
+            {{ pod["object"]["spec"]["snapshotStandbyInfo"]["pageable"]// (1024 *1024)}} MB
+        </td>
+        <td>{{ pod["object"]["spec"]["standby"]["pinned"] }} :
+            {{ pod["object"]["spec"]["snapshotStandbyInfo"]["pinned"]// (1024 *1024)}} MB
+        </td>
+        <td>{{ pod["object"]["spec"]["allocResources"]["GPUs"]["vRam"] }}</td>
+        <td>{{ pod["object"]["spec"]["allocResources"]["GPUs"]["map"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{{ hosturl }}
+{% endblock %}

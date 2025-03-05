@@ -1,0 +1,63 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "deepseek-ai",
+    "name": "deepseek-vl2-tiny",
+    "object": {
+        "spec": {
+            "image": "vllm-openai-upgraded:v.0.1",
+            "commands": [
+                "--model",
+                "deepseek-ai/deepseek-vl2-tiny",
+                "--enforce-eager",
+                "--disable-custom-all-reduce",
+                "--trust-remote-code",
+                "--max-model-len",
+                "2000",
+                "--tensor-parallel-size=2"
+            ],
+            "resources": {
+                "CPU": 20000,
+                "Mem": 50000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 2,
+                    "vRam": 13000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "What is the capital of USA?",
+                "path": "v1/completions",
+                "body": {
+                    "model": "deepseek-ai/deepseek-vl2-tiny",
+                    "max_tokens": "1000",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

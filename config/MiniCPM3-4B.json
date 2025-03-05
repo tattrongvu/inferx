@@ -1,0 +1,61 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "openbmb",
+    "name": "MiniCPM3-4B",
+    "object": {
+        "spec": {
+            "image": "vllm-openai-upgraded:v.0.1",
+            "commands": [
+                "--model",
+                "openbmb/MiniCPM3-4B",
+                "--enforce-eager",
+                "--trust-remote-code",
+                "--max-model-len",
+                "200"
+            ],
+            "resources": {
+                "CPU": 12000,
+                "Mem": 24000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 9000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "推荐5个北京的景点。",
+                "path": "v1/completions",
+                "body": {
+                    "model": "openbmb/MiniCPM3-4B",
+                    "max_tokens": "100",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

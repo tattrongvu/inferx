@@ -1,0 +1,63 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "mistralai",
+    "name": "Mistral-7B-v0.1",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "mistralai/Mistral-7B-v0.1",
+                "--enforce-eager",
+                "--disable-custom-all-reduce",
+                "--gpu-memory-utilization",
+                "0.99",
+                "--max-model-len",
+                "200"
+            ],
+            "resources": {
+                "CPU": 20000,
+                "Mem": 30000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 14800
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "I like traveling by train because",
+                "path": "v1/completions",
+                "body": {
+                    "model": "mistralai/Mistral-7B-v0.1",
+                    "max_tokens": "180",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

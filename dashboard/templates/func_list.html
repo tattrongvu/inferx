@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Models</h2>
+
+<style>
+    table,
+    th,
+    td {
+        border: 1px solid black;
+    }
+</style>
+
+<table style="width:100%">
+    <tr>
+        <th rowspan="2">tenant</th>
+        <th rowspan="2">namespace</th>
+        <th rowspan="2">model name</th>
+        <th rowspan="2">gpu count</th>
+        <th rowspan="2">vram (GB)</th>
+        <th rowspan="2">cpu</th>
+        <th rowspan="2">memory (GB)</th>
+        <th colspan="3"">standby</th>
+        <th rowspan=" 2">state</th>
+        <th rowspan="2">snapshot nodes</th>
+        <th rowspan="2">revision</th>
+    </tr>
+    <tr>
+        <th>gpu</th>
+        <th>pageable</th>
+        <th>pinned</th>
+
+    </tr>
+    {% for func in funcs %}
+    <tr>
+        <td><a href="{{ hosturl }}listfunc?tenant={{ func['func']['tenant'] }}">
+                {{ func['func']['tenant'] }}
+            </a></td>
+        <td><a
+                href="{{ hosturl }}listfunc?tenant={{ func['func']['tenant'] }}&&namespace={{ func['func']['namespace'] }}">
+                {{ func['func']['namespace'] }}
+            </a></td>
+        <td><a
+                href="{{ hosturl }}func?tenant={{ func['func']['tenant'] }}&&namespace={{ func['func']['namespace'] }}&&name={{ func['func']['name'] }}">{{
+                func['func']['name'] }}
+            </a></td>
+        <td>{{ func['func']['object']["spec"]["resources"]["GPU"]["Count"] }}</td>
+        <td>{{ func['func']['object']["spec"]["resources"]["GPU"]["vRam"]/1000 }}</td>
+        <td>{{ func['func']['object']["spec"]["resources"]["CPU"]/1000 }}</td>
+        <td>{{ func['func']['object']["spec"]["resources"]["Mem"]/1000 }}</td>
+        <td>{{ func['func']['object']["spec"]["standby"]["gpu"] }}</td>
+        <td>{{ func['func']['object']["spec"]["standby"]["pageable"] }}</td>
+        <td>{{ func['func']['object']["spec"]["standby"]["pinned"] }}</td>
+        <td>{{ func['func']['object']["status"]["state"] }}</td>
+        <td>{{ func['snapshotNodes'] }}</td>
+        <td>{{ func['func']['object']["spec"]["version"] }}</td>
+
+    </tr>
+    {% endfor %}
+
+</table>
+
+<h2>Summary</h2>
+<table width="500">
+    <tr>
+        <td colspan="1" width="200">
+            <h3>Model Count</h3>
+        </td>
+        <td colspan="1" width="200">
+            <h3>{{ summary["model_count"] }}</h3>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="1">
+            <h3>GPU Count</h3>
+        </td>
+        <td colspan="1">
+            <h3>{{ summary["gpucount"] }}</h3>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="1">
+            <h3>VRAM (GB)</h3>
+        </td>
+        <td colspan="1">
+            <h3>{{ summary["vram"] / 1000 }} GB</h3>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="1">
+            <h3>CPU Cores</h3>
+        </td>
+        <td colspan="1">
+            <h3>{{ summary["cpu"] / 1000 }}</h3>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="1">
+            <h3>Memory (GB)</h3>
+        </td>
+        <td colspan="1">
+            <h3>{{ summary["memory"] / 1000 }} GB</h3>
+        </td>
+    </tr>
+</table>
+{{ hosturl }}
+{% endblock %}

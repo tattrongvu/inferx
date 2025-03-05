@@ -1,0 +1,60 @@
+{
+    "type": "function",
+    "tenant": "t1",
+    "namespace": "ns1",
+    "name": "gpt-j-6b",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "EleutherAI/gpt-j-6b",
+                "--enforce-eager",
+                "--disable-custom-all-reduce",
+                "--trust-remote-code",
+                "--max-model-len",
+                "2000",
+                "--tensor-parallel-size=2"
+            ],
+            "resources": {
+                "CPU": 6000,
+                "Mem": 70000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 2,
+                    "vRam": 15000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "path": "/v1/completions",
+                "port": 8000,
+                "schema": "Http"
+            },
+            "probe": {
+                "path": "/health",
+                "port": 8000,
+                "schema": "Http"
+            },
+            "api_type": {
+                "openai": {
+                    "name": "EleutherAI/gpt-j-6b",
+                    "max_tokens": 1000,
+                    "temperature": 0
+                }
+            },
+            "keepalive": "Blob"
+        }
+    }
+}

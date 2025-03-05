@@ -1,0 +1,60 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "TinyLlama",
+    "name": "TinyLlama-1.1B-Chat-v1.0_13GB",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+                "--disable-custom-all-reduce",
+                "--max-model-len",
+                "2000"
+            ],
+            "resources": {
+                "CPU": 20000,
+                "Mem": 18000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 13800
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "Seattle is a",
+                "path": "v1/completions",
+                "body": {
+                    "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+                    "max_tokens": "1000",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

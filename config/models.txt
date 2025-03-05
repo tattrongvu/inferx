@@ -1,0 +1,218 @@
+export INFX_GATEWAY_URL="http://localhost:4000"
+/opt/inferx/bin/ixctl create public.json
+
+#######################################################
+/opt/inferx/bin/ixctl create TinyLlama_namespace.json
+/opt/inferx/bin/ixctl create TinyLlama-1.1B-Chat-v1.0.json
+/opt/inferx/bin/ixctl create TinyLlama-1.1B-Chat-v1.0_13GB.json
+/opt/inferx/bin/ixctl create TinyLlama-1.1B-Chat-v1.0_2gpu.json
+
+/opt/inferx/bin/ixctl delete function public TinyLlama TinyLlama-1.1B-Chat-v1.0
+/opt/inferx/bin/ixctl delete function public TinyLlama TinyLlama-1.1B-Chat-v1.0_13GB
+/opt/inferx/bin/ixctl delete function public TinyLlama TinyLlama-1.1B-Chat-v1.0_2gpu
+
+#######################################################
+/opt/inferx/bin/ixctl create facebook_namespace.json
+/opt/inferx/bin/ixctl create opt-iml-max-1.3b.json
+
+/opt/inferx/bin/ixctl delete function public facebook opt-iml-max-1.3b
+
+#######################################################
+/opt/inferx/bin/ixctl create Qwen_namespace.json
+
+/opt/inferx/bin/ixctl create Qwen2.5-Coder-1.5B-Instruct.json
+/opt/inferx/bin/ixctl create Qwen2.5-Coder-3B.json
+/opt/inferx/bin/ixctl create Qwen2.5-Coder-7B-Instruct.json
+
+/opt/inferx/bin/ixctl create Qwen2.5-Coder-14B-Instruct-GPTQ-Int8.json
+/opt/inferx/bin/ixctl create Qwen2.5-7B-Instruct-GPTQ-Int8.json
+/opt/inferx/bin/ixctl create Qwen2.5-1.5B.json
+/opt/inferx/bin/ixctl create Qwen2.5-Math-1.5B-Instruct.json
+/opt/inferx/bin/ixctl create Qwen2.5-Math-1.5B.json
+/opt/inferx/bin/ixctl create Qwen2.5-Math-7B-Instruct.json
+/opt/inferx/bin/ixctl create Qwen2.5-Math-7B.json
+/opt/inferx/bin/ixctl create Qwen2.5-7B-Instruct-1M.json
+
+
+
+/opt/inferx/bin/ixctl delete function public Qwen Qwen2.5-Coder-1.5B-Instruct
+/opt/inferx/bin/ixctl delete function public Qwen Qwen2.5-Math-1.5B-Instruct
+/opt/inferx/bin/ixctl delete function public Qwen Qwen2.5-7B-Instruct-GPTQ-Int8
+/opt/inferx/bin/ixctl delete function public Qwen Qwen2.5-Coder-7B-Instruct
+/opt/inferx/bin/ixctl delete function public Qwen Qwen2.5-1.5B
+
+#######################################################
+/opt/inferx/bin/ixctl create THUDM_namespace.json
+/opt/inferx/bin/ixctl create chatglm3-6b.json
+/opt/inferx/bin/ixctl create chatglm3-6b-32k.json
+/opt/inferx/bin/ixctl create chatglm3-6b-128k.json
+
+/opt/inferx/bin/ixctl delete function public THUDM chatglm3-6b
+/opt/inferx/bin/ixctl delete function public THUDM chatglm3-6b-32k
+/opt/inferx/bin/ixctl delete function public THUDM chatglm3-6b-128k
+
+#######################################################
+/opt/inferx/bin/ixctl create mistralai_namespace.json
+/opt/inferx/bin/ixctl create Mistral-7B-v0.1_2gpu.json
+
+/opt/inferx/bin/ixctl create Mistral-7B-v0.1.json
+
+
+/opt/inferx/bin/ixctl delete function public mistralai Mistral-7B-v0.1
+/opt/inferx/bin/ixctl delete function public mistralai Mistral-7B-v0.1_2gpu
+
+#######################################################
+/opt/inferx/bin/ixctl create BAAI_namespace.json
+/opt/inferx/bin/ixctl create Aquila-7B.json
+
+/opt/inferx/bin/ixctl delete function public BAAI Aquila-7B
+
+#######################################################
+/opt/inferx/bin/ixctl create baichuan-inc_namespace.json
+/opt/inferx/bin/ixctl create Baichuan-7B.json
+/opt/inferx/bin/ixctl create Baichuan2-7B-Chat.json
+# Unknown quantization method: . Must be one of ['aqlm', 'awq', 'deepspeedfp', 'fp8', 'marlin', 'gptq_marlin_24', 'gptq_marlin', 'gptq', 'squeezellm', 'compressed-tensors', 'bitsandbytes'].
+# /opt/inferx/bin/ixctl create Baichuan2-13B-Chat-4bits.json
+
+/opt/inferx/bin/ixctl delete function public baichuan-inc Baichuan-7B
+/opt/inferx/bin/ixctl delete function public baichuan-inc Baichuan2-13B-Chat-4bits
+
+
+#######################################################
+/opt/inferx/bin/ixctl create mosaicml_namespace.json
+/opt/inferx/bin/ixctl create mpt-7b.json
+/opt/inferx/bin/ixctl create mpt-7b-storywriter.json
+
+/opt/inferx/bin/ixctl delete function public mosaicml mpt-7b
+/opt/inferx/bin/ixctl delete function public mosaicml mpt-7b-storywriter
+
+
+#######################################################
+/opt/inferx/bin/ixctl create microsoft_namespace.json
+/opt/inferx/bin/ixctl create Phi-3-mini-4k-instruct.json
+/opt/inferx/bin/ixctl create Phi-3-mini-128k-instruct.json
+
+/opt/inferx/bin/ixctl delete function public microsoft Phi-3-mini-4k-instruct
+/opt/inferx/bin/ixctl delete function public microsoft Phi-3-mini-128k-instruct
+
+#######################################################
+/opt/inferx/bin/ixctl create Deci_namespace.json
+/opt/inferx/bin/ixctl create DeciLM-7B.json
+/opt/inferx/bin/ixctl create DeciLM-7B-instruct.json
+
+/opt/inferx/bin/ixctl delete function public Deci DeciLM-7B
+/opt/inferx/bin/ixctl delete function public Deci DeciLM-7B-instruct
+
+#######################################################
+/opt/inferx/bin/ixctl create tiiuae_namespace.json
+#/opt/inferx/bin/ixctl create falcon-7b.json #ValueError: Total number of attention heads (71) must be divisible by tensor parallel size (2).
+/opt/inferx/bin/ixctl create falcon-rw-7b.json
+
+/opt/inferx/bin/ixctl delete function public tiiuae falcon-7b
+/opt/inferx/bin/ixctl delete function public tiiuae falcon-rw-7b
+
+#######################################################
+/opt/inferx/bin/ixctl create openai-community_namespace.json
+/opt/inferx/bin/ixctl create gpt2-xl.json
+
+/opt/inferx/bin/ixctl delete function public openai-community gpt2-xl
+
+#######################################################
+/opt/inferx/bin/ixctl create nomic-ai_namespace.json
+/opt/inferx/bin/ixctl create gpt4all-j.json
+
+/opt/inferx/bin/ixctl delete function public nomic-ai gpt4all-j
+
+#######################################################
+/opt/inferx/bin/ixctl create EleutherAI_namespace.json
+/opt/inferx/bin/ixctl create pythia-12b.json
+
+/opt/inferx/bin/ixctl delete function public EleutherAI pythia-12b
+
+#######################################################
+/opt/inferx/bin/ixctl create openbmb_namespace.json
+/opt/inferx/bin/ixctl create MiniCPM-2B-dpo-bf16.json
+/opt/inferx/bin/ixctl create MiniCPM-2B-sft-bf16.json
+#/opt/inferx/bin/ixctl create MiniCPM3-4B.json #Model architectures ['MiniCPM3ForCausalLM'] are not supported for now.
+
+
+/opt/inferx/bin/ixctl delete function public openbmb MiniCPM-2B-dpo-bf16fstarcoder2-7b
+/opt/inferx/bin/ixctl delete function public openbmb MiniCPM-2B-sft-bf16
+
+/opt/inferx/bin/ixctl delete function public openbmb MiniCPM3-4B
+
+#######################################################
+/opt/inferx/bin/ixctl create databricks_namespace.json
+/opt/inferx/bin/ixctl create dolly-v2-12b.json
+
+/opt/inferx/bin/ixctl delete function public databricks dolly-v2-12b
+
+#######################################################
+/opt/inferx/bin/ixctl create OpenAssistant_namespace.json
+/opt/inferx/bin/ixctl create oasst-sft-4-pythia-12b-epoch-3.5.json
+
+/opt/inferx/bin/ixctl delete function public OpenAssistant oasst-sft-4-pythia-12b-epoch-3.5
+
+#######################################################
+/opt/inferx/bin/ixctl create allenai_namespace.json
+/opt/inferx/bin/ixctl create OLMo-1B-hf.json
+/opt/inferx/bin/ixctl create OLMo-7B-hf.json
+
+/opt/inferx/bin/ixctl delete function public allenai OLMo-1B-hf
+/opt/inferx/bin/ixctl delete function public allenai OLMo-7B-hf
+
+#######################placeholder doesn't work################################
+
+/opt/inferx/bin/ixctl create deepseek-ai_namespace.json
+/opt/inferx/bin/ixctl create DeepSeek-R1-Distill-Llama-8B.json
+/opt/inferx/bin/ixctl create DeepSeek-R1-Distill-Qwen-1.5B.json
+/opt/inferx/bin/ixctl create DeepSeek-R1-Distill-Qwen-7B.json
+/opt/inferx/bin/ixctl create deepseek-llm-7b-chat.json
+/opt/inferx/bin/ixctl create deepseek-math-7b-instruct.json
+
+/opt/inferx/bin/ixctl delete function public deepseek-ai deepseek-vl2-tiny
+/opt/inferx/bin/ixctl delete function public deepseek-ai deepseek-math-7b-rl
+/opt/inferx/bin/ixctl delete function public deepseek-ai DeepSeek-R1-Distill-Qwen-1.5B
+
+#######################################################
+
+/opt/inferx/bin/ixctl create stabilityai_namespace.json
+/opt/inferx/bin/ixctl create stable-diffusion-xl-base-1.0.json
+
+/opt/inferx/bin/ixctl delete function public deepseek-ai stable-diffusion-xl-base-1.0
+
+
+#######################################################
+
+/opt/inferx/bin/ixctl create Salesforce_namespace.json
+/opt/inferx/bin/ixctl create codegen-2B-multi.json
+
+
+
+#######################################################
+/opt/inferx/bin/ixctl create llava-hf_namespace.json
+/opt/inferx/bin/ixctl create llava-1.5-7b-hf.json
+
+/opt/inferx/bin/ixctl delete function public llava-hf llava-1.5-7b-hf
+
+
+#######################################################
+/opt/inferx/bin/ixctl create bigcode_namespace.json
+/opt/inferx/bin/ixctl create starcoder2-3b.json
+/opt/inferx/bin/ixctl create starcoder2-7b.json
+
+/opt/inferx/bin/ixctl delete function public allenai starcoder2-3b
+
+
+#######################################################
+/opt/inferx/bin/ixctl create meta-llama_namespace.json
+/opt/inferx/bin/ixctl create Llama-2-13b-hf.json
+
+
+#######################################################
+/opt/inferx/bin/ixctl create state-spaces_namespace.json
+#/opt/inferx/bin/ixctl create mamba-2.8b-hf.json // Model architectures ['MambaForCausalLM'] are not supported for now.
+#/opt/inferx/bin/ixctl create mamba-1.4b-hf.json
+
+/opt/inferx/bin/ixctl delete function public state-spaces mamba-2.8b-hf
+/opt/inferx/bin/ixctl delete function public state-spaces mamba-1.4b-hf

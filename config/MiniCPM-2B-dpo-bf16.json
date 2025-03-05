@@ -1,0 +1,62 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "openbmb",
+    "name": "MiniCPM-2B-dpo-bf16",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "openbmb/MiniCPM-2B-dpo-bf16",
+                "--enforce-eager",
+                "--disable-custom-all-reduce",
+                "--trust-remote-code",
+                "--max-model-len",
+                "2000"
+            ],
+            "resources": {
+                "CPU": 12000,
+                "Mem": 28000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 13800
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "山东省最高的山是哪座山, 它比黄山高还是矮？差距多少？",
+                "path": "v1/completions",
+                "body": {
+                    "model": "openbmb/MiniCPM-2B-dpo-bf16",
+                    "max_tokens": "1000",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

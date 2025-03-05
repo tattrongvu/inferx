@@ -1,0 +1,56 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "llava-hf",
+    "name": "llava-1.5-7b-hf",
+    "object": {
+        "spec": {
+            "image": "vllm-openai-upgraded:v0.1.0",
+            "entrypoint": [
+                "/usr/bin/python3"
+            ],
+            "commands": [
+                "/usr/lib/run_llava.py"
+            ],
+            "resources": {
+                "CPU": 20000,
+                "Mem": 12000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 14000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "llava",
+                "prompt": "What is shown in this image?",
+                "path": "v1/completions",
+                "body": {
+                    "image": "https://www.ilankelman.org/stopsigns/australia.jpg"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Model {{ name }}</h2>
+
+<style>
+    table,
+    th,
+    td {
+        border: 1px solid black;
+    }
+</style>
+<table style="width:100%">
+    <tr>
+        <th>namespace</th>
+        <th>model name</th>
+        <th>standby gpu</th>
+        <th>standby pageable</th>
+        <th>standby pinned memory</th>
+        <th>gpu count</th>
+        <th>vRam (MB)</th>
+        <th>cpu</th>
+        <th>memory (MB)</th>
+        <th>state</th>
+        <th>revision</th>
+    </tr>
+    <tr>
+        <td>{{ namespace }}</td>
+        <td>{{ name }}</td>
+        <td>{{ func['func']['object']["spec"]["standby"]["gpu"] }}</td>
+        <td>{{ func['func']['object']["spec"]["standby"]["pageable"] }}</td>
+        <td>{{ func['func']['object']["spec"]["standby"]["pinned"] }}</td>
+        <td>{{ func["func"]["object"]["spec"]["resources"]["GPU"]["Count"] }}</td>
+        <td>{{ func["func"]["object"]["spec"]["resources"]["GPU"]["vRam"] }}</td>
+        <td>{{ func['func']['object']["spec"]["resources"]["CPU"]/1000 }}</td>
+        <td>{{ func['func']['object']["spec"]["resources"]["Mem"] }}</td>
+        <td>{{ func["func"]["object"]["status"]["state"] }}</td>
+        <td>{{ func["func"]["object"]["spec"]["version"] }}</td>
+    </tr>
+</table>
+
+
+{% if func["func"]["object"]["spec"]["sample_query"]["apiType"] == "llava" %}
+<h1>Image</h1>
+<textarea id="image" rows="2"
+    cols="120">{{ func["func"]["object"]["spec"]["sample_query"]["body"]["image"] }}</textarea>
+{% else %}
+<h1 style="display:none;">Image</h1>
+<textarea id="image" rows="2" cols="120" style="display:none;"></textarea>
+{% endif %}
+<h1>Prompt</h1>
+
+<textarea id="prompt" rows="3" cols="120">{{ func["func"]["object"]["spec"]["sample_query"]["prompt"] }}</textarea>
+<br />
+<!-- <img src="{{ url_for('static', filename='button.gif') }}" alt="My GIF"> -->
+
+<button id="button" onclick="streamOutput()">
+    <img id="processing" style="display:none;" src="{{ url_for('static', filename='button.gif') }}" />
+    <div id="go"> Go </div>
+</button>
+
+
+<h2>
+    <div id="startDiv"></div>
+    <div id="ttftDiv"></div>
+</h2>
+
+<img id="myImage" style="display:none;" alt="API Image" />
+<br>
+<textarea id="output" rows="20" cols="120"></textarea>
+
+<h1>Sample Rest Call</h1>
+<textarea id="restcall" rows="8" cols="120">
+{{ func["sampleRestCall"] }}
+</textarea>
+
+<h2>Pods</h2>
+<table style="width:100%">
+    <tr>
+        <th>tenant</th>
+        <th>namespace</th>
+        <th>pod name</th>
+        <th>state</th>
+        <th>require resource</th>
+        <th>allocated resource</th>
+        <!-- <th>funcpod </th> -->
+    </tr>
+    {% for pod in func["pods"] %}
+    <tr>
+        <td>{{ pod["tenant"] }}</td>
+        <td>{{ pod["namespace"] }}</td>
+        <td><a href="{{ hosturl }}pod?tenant={{ pod[" tenant"] }}&&namespace={{ pod["namespace"] }}&&name={{ pod["name"]
+                }}">{{
+                pod["name"] }}</a></td>
+        <td>{{ pod["object"]["status"]["state"] }}</td>
+        <td>{{ pod["object"]["spec"]["reqResources"] }}</td>
+        <td>{{ pod["object"]["spec"]["allocResources"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+<script>
+    const tenant = {{ tenant | tojson }};
+    const namespace = {{ namespace | tojson }};
+    const name = {{ name | tojson }};
+    const apiType = {{ apiType | tojson }};
+
+    async function streamOutput() {
+        const button = document.getElementById('button');
+        const outputDiv = document.getElementById('output');
+        const prompt = document.getElementById('prompt').value;
+        const image = document.getElementById('image').value;
+
+
+        const startTime = performance.now();
+        const llvm = true;
+        outputDiv.innerHTML = ""
+        try {
+            const processImage = document.getElementById('processing');
+            const buttonTxt = document.getElementById('go');
+            button.disabled = true;
+
+            processImage.style = "width:15px;height:15px;";
+            buttonTxt.style = "display:none;";
+
+            const hostname = window.location.hostname;
+            const port = window.location.port;
+            const schema = window.location.protocol;
+
+            url = schema + "//" + hostname + ":" + port + "/generate";
+            if (apiType == "text2img") {
+                url = schema + "//" + hostname + ":" + port + "/text2img";
+            }
+
+            const body = {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "prompt": prompt,
+                    "image": image,
+                    "tenant": tenant,
+                    "namespace": namespace,
+                    "funcname": name
+                })
+            };
+
+            const response = await fetch(url, body);
+            processImage.style = "display:none;"
+            buttonTxt.style = "";
+
+
+            const restore = response.headers.get("tcpconn_latency_header");
+            const ttft = response.headers.get("ttft_latency_header");
+            const contentType = response.headers.get("content-type");
+
+            const startDiv = document.getElementById('startDiv');
+            const ttftDiv = document.getElementById('ttftDiv');
+            startDiv.innerHTML = "Start Latency: " + restore + ' ms ' + '<br>';
+            ttftDiv.innerHTML = "Time To First Token: " + ttft + ' ms ' + '<br>';
+
+            if (response.ok == false) {
+                outputDiv.innerHTML = response.content;
+                button.disabled = false;
+                return
+            }
+
+            if (apiType == "text2img") {
+                response.blob().then(blob => {
+                    const imgUrl = URL.createObjectURL(blob);
+                    // Set the src attribute of the image element to display the image
+                    document.getElementById('myImage').src = imgUrl;
+                    document.getElementById('myImage').style = "block;"; // "width:800px;height:400px;";
+
+                });
+            } else {
+                // Read the response as a stream of data
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+
+                while (true) {
+                    const { done, value } = await reader.read();
+
+                    if (done) {
+                        break;
+                    }
+
+                    // Massage and parse the chunk of data
+                    const chunk = decoder.decode(value);
+                    outputDiv.innerHTML += chunk; //.replace(new RegExp('\r?\n', 'g'), '<br />');
+                    // outputDiv.style = "";
+                }
+            }
+
+        } catch (error) {
+            outputDiv.innerHTML += error + '<br>';
+            outputDiv.innerHTML += error.cause + '<br>';
+            console.error('Error fetching HTML:', error);
+            button.disabled = false;
+        }
+
+        button.disabled = false;
+    }
+</script>
+
+
+
+{% if fails %}
+<h2>Failures</h2>
+<table style="width:100%">
+    <tr>
+        <th>tenant</th>
+        <th>namespace</th>
+        <th>model name</th>
+        <th>revision</th>
+        <th>id</th>
+        <th>exit info</th>
+        <th>state</th>
+    </tr>
+    {% for fail in fails %}
+    <tr>
+        <td>{{ fail["tenant"] }}</td>
+        <td>{{ fail["namespace"] }}</td>
+        <td>{{ fail["fpname"] }}</td>
+        <td>{{ fail["fprevision"] }}</td>
+        <td>{{ fail["id"] }}</td>
+        <td>{{ fail["exit_info"] }}</td>
+        <td><a href="{{ hosturl }}failpod?tenant={{ fail['tenant'] }}&&namespace={{ fail['namespace'] }}&&name={{
+                fail['fpname'] }}&&version={{fail['fprevision'] }}&&id={{fail['id'] }}">log</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+
+<h2>Func</h2>
+<table style="width:100%">
+    <tr>
+        {% autoescape false %}
+        <td>{{ funcspec }}</td>
+        {% endautoescape %}
+    </tr>
+</table>
+
+
+{{ log | safe }}
+{% endblock %}

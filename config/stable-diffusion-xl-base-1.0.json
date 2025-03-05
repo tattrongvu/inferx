@@ -1,0 +1,58 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "stabilityai",
+    "name": "stable-diffusion-xl-base-1.0",
+    "object": {
+        "spec": {
+            "image": "vllm-openai-upgraded:v0.1.0",
+            "entrypoint": [
+                "/usr/bin/python3"
+            ],
+            "commands": [
+                "/usr/lib/run_stablediffusion.py"
+            ],
+            "resources": {
+                "CPU": 20000,
+                "Mem": 50000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 13800
+                }
+            },
+            "envs": [
+                [
+                    "height",
+                    "512"
+                ],
+                [
+                    "width",
+                    "512"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "text2img",
+                "prompt": "An astronaut riding a green horse",
+                "path": "funccall",
+                "body": {}
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}
