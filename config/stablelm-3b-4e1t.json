@@ -1,0 +1,58 @@
+{
+    "type": "function",
+    "tenant": "t1",
+    "namespace": "ns1",
+    "name": "stablelm-3b-4e1t",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "stabilityai/stablelm-3b-4e1t",
+                "--enforce-eager",
+                "--disable-custom-all-reduce",
+                "--max-model-len",
+                "2000"
+            ],
+            "resources": {
+                "CPU": 6000,
+                "Mem": 18000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 8000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "path": "/v1/completions",
+                "port": 8000,
+                "schema": "Http"
+            },
+            "probe": {
+                "path": "/health",
+                "port": 8000,
+                "schema": "Http"
+            },
+            "api_type": {
+                "openai": {
+                    "name": "stabilityai/stablelm-3b-4e1t",
+                    "max_tokens": 1000,
+                    "temperature": 0
+                }
+            },
+            "keepalive": "Blob"
+        }
+    }
+}

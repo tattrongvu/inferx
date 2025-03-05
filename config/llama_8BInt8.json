@@ -1,0 +1,57 @@
+{
+    "type": "function",
+    "tenant": "t1",
+    "namespace": "ns1",
+    "name": "TinyLlama-1.1B-Chat-v1.0_2gpu",
+    "spec": {
+        "image": "vllm/vllm-openai:v0.6.2",
+        "commands": [
+            "--model",
+            "meta-llama/Llama-Guard-3-8B-INT8",
+            "--enforce-eager",
+            "--disable-custom-all-reduce",
+            "--max-model-len",
+            "2000",
+            "--tensor-parallel-size=2"
+        ],
+        "resources": {
+            "CPU": 6000,
+            "Mem": 50000,
+            "GPU": {
+                "Type": "Any",
+                "Count": 2,
+                "vRam": 13800
+            }
+        },
+        "envs": [
+            [
+                "LD_LIBRARY_PATH",
+                "/Quark/target/debug/:$LD_LIBRARY_PATH"
+            ]
+        ],
+        "mounts": [
+            {
+                "hostpath": "/home/brad/cache",
+                "mountpath": "/root/.cache/huggingface"
+            }
+        ],
+        "endpoint": {
+            "path": "/v1/completions",
+            "port": 8000,
+            "schema": "Http"
+        },
+        "probe": {
+            "path": "/health",
+            "port": 8000,
+            "schema": "Http"
+        },
+        "api_type": {
+            "openai": {
+                "name": "meta-llama/Llama-Guard-3-8B-INT8",
+                "max_tokens": 1000,
+                "temperature": 0
+            }
+        },
+        "keepalive": "Blob"
+    }
+}

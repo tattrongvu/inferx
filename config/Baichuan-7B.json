@@ -1,0 +1,63 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "baichuan-inc",
+    "name": "Baichuan-7B",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "baichuan-inc/Baichuan-7B",
+                "--enforce-eager",
+                "--disable-custom-all-reduce",
+                "--trust-remote-code",
+                "--max-model-len",
+                "1200",
+                "--tensor-parallel-size=2"
+            ],
+            "resources": {
+                "CPU": 20000,
+                "Mem": 60000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 2,
+                    "vRam": 13800
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "登鹳雀楼->王之涣\n夜雨寄北->",
+                "path": "v1/completions",
+                "body": {
+                    "model": "baichuan-inc/Baichuan-7B",
+                    "max_tokens": "1000",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

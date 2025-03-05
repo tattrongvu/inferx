@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Nodes</h2>
+<style>
+    table,
+    th,
+    td {
+        border: 1px solid black;
+    }
+</style>
+<table style="width:100%">
+    <tr>
+        <th>nodename</th>
+        <th>Ip Address</th>
+        <th>CIDR</th>
+        <th>CPU Count</th>
+        <th>CPU Memory (GB) </th>
+        <th>MaxContextPerGPU </th>
+        <th>BlobStore </th>
+        <th>GPUs </th>
+    </tr>
+    {% for node in nodes %}
+    <tr>
+        <td><a href="{{ hosturl }}node?name={{ node["name"] }}">{{
+                node["name"] }}</a></td>
+        {% autoescape false %}
+        <td>{{ node['object']['nodeIp'] }}</td>
+        <td>{{ node['object']['cidr'] }}</td>
+        <td>{{ node['object']['resources']['CPU'] // 1000 }}</td>
+        <td>{{ node['object']['resources']['Mem'] // 1000 }}</td>
+        <td>{{ node['object']['resources']['MaxContextPerGPU'] }}</td>
+        <td>{{ node['object']['blobStoreEnable'] }}</td>
+        <td>{{ node['object']['resources']['GPUs'] }}</td>
+        {% endautoescape %}
+    </tr>
+    {% endfor %}
+</table>
+{{ hosturl }}
+{% endblock %}

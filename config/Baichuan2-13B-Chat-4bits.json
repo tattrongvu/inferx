@@ -1,0 +1,61 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "baichuan-inc",
+    "name": "Baichuan2-13B-Chat-4bits",
+    "object": {
+        "spec": {
+            "image": "vllm-openai-upgraded:v.0.1",
+            "commands": [
+                "--model",
+                "baichuan-inc/Baichuan2-13B-Chat-4bits",
+                "--disable-custom-all-reduce",
+                "--max-model-len",
+                "2000",
+                "--trust-remote-code"
+            ],
+            "resources": {
+                "CPU": 12000,
+                "Mem": 14000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 8000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "解释一下'温故而知新'",
+                "path": "v1/completions",
+                "body": {
+                    "model": "baichuan-inc/Baichuan2-13B-Chat-4bits",
+                    "max_tokens": "1000",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

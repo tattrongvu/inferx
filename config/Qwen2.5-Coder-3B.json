@@ -1,0 +1,59 @@
+{
+    "type": "function",
+    "tenant": "public",
+    "namespace": "Qwen",
+    "name": "Qwen2.5-Coder-3B",
+    "object": {
+        "spec": {
+            "image": "vllm/vllm-openai:v0.6.2",
+            "commands": [
+                "--model",
+                "Qwen/Qwen2.5-Coder-3B",
+                "--max-model-len",
+                "1000"
+            ],
+            "resources": {
+                "CPU": 12000,
+                "Mem": 18000,
+                "GPU": {
+                    "Type": "Any",
+                    "Count": 1,
+                    "vRam": 10000
+                }
+            },
+            "envs": [
+                [
+                    "LD_LIBRARY_PATH",
+                    "/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib/:$LD_LIBRARY_PATH"
+                ]
+            ],
+            "mounts": [
+                {
+                    "hostpath": "/home/brad/cache",
+                    "mountpath": "/root/.cache/huggingface"
+                }
+            ],
+            "endpoint": {
+                "port": 8000,
+                "schema": "Http",
+                "probe": "/health"
+            },
+            "sample_query": {
+                "apiType": "openai",
+                "prompt": "write a quick sort algorithm.",
+                "path": "v1/completions",
+                "body": {
+                    "model": "Qwen/Qwen2.5-Coder-3B",
+                    "max_tokens": "800",
+                    "temperature": "0",
+                    "stream": "true"
+                }
+            },
+            "standby": {
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
+            }
+        }
+    }
+}

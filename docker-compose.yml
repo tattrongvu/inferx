@@ -1,0 +1,86 @@
+services:
+  db:
+    image: postgres:14.5
+    restart: unless-stopped
+    container_name: db
+    environment:
+      - POSTGRES_USER=audit_user
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=auditdb
+      - PGDATA=/data/postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - /opt/inferx/config/create_table.sql:/docker-entrypoint-initdb.d/db.sql
+      - /opt/inferx/data/postgres:/data/postgres
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.13
+    restart: unless-stopped
+    container_name: etcd
+    volumes:
+      - /opt/inferx/data/etcd:/opt/inferx/data/etcd
+    command:
+      - etcd
+      - --name=etcd-00
+      - --data-dir=/opt/inferx/data/etcd
+      - --advertise-client-urls=http://etcd-00:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --initial-advertise-peer-urls=http://etcd-00:2380
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-cluster=etcd-00=http://etcd-00:2380
+    ports:
+      - '2379:2379'
+      - '2380:2380'
+  ffly:
+    image: inferx/inferx_one:v0.1.0
+    restart: on-failure
+    container_name: inferx_one
+    privileged: true
+    user: root
+    cpus: 10
+    network_mode: "host"
+    pid: "host"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4000" ]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_started
+      etcd:
+        condition: service_started
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/udev:/run/udev
+      - /dev/hugepages:/dev/hugepages
+      - /opt/inferx/:/opt/inferx/
+      - /etc/letsencrypt/:/etc/letsencrypt/
+      - /var/run/docker/runtime-runc/moby/:/var/run/docker/runtime-runc/moby/
+      - /var/lib/docker/:/var/lib/docker/
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all # alternatively, use `count: all` for all GPUs
+              capabilities: [ gpu ]
+    command:
+      - ./onenode
+      - /opt/inferx/config/node.json
+  dashboard:
+    image: inferx/inferx_dashboard:v0.1.0
+    restart: on-failure
+    container_name: inferx_dashboard
+    network_mode: "host"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:1250/intro?name=home.md" ]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - db
+      - etcd
+    volumes:
+      - /etc/letsencrypt/:/etc/letsencrypt/
+      - /opt/public/:/public/

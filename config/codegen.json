@@ -1,0 +1,45 @@
+{
+    "type": "function",
+    "tenant": "t1",
+    "namespace": "ns1",
+    "name": "codegen",
+    "spec": {
+        "image": "ws3:latest",
+        "commands": [
+            "/usr/bin/python3",
+            "/Quark/test/codegen_stream.py"
+        ],
+        "resources": {
+            "CPU": 100,
+            "Mem": 200,
+            "GPU": {
+                "Type": "RTX3060",
+                "Count": 1
+            }
+        },
+        "envs": [
+            [
+                "LD_LIBRARY_PATH",
+                "/Quark/target/debug/:$LD_LIBRARY_PATH"
+            ],
+            [
+                "LD_PRELOAD",
+                "/Quark/target/debug/libcudaproxy.so"
+            ]
+        ],
+        "endpoint": {
+            "path": "/funccall",
+            "port": 80,
+            "schema": "Http"
+        },
+        "mounts": [
+            {
+                "hostpath": "/home/brad/rust/ffly",
+                "mountpath": "/Quark"
+            }
+        ],
+        "keepalive": {
+            "keepalive": 2
+        }
+    }
+}

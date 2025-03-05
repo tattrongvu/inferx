@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    table,
+    th,
+    td {
+        border: 1px solid black;
+    }
+</style>
+
+<h2>Snapshots</h2>
+<table style="width:100%">
+    <tr>
+        <th>Snapshot Id</th>
+        <th>nodename</th>
+        <th>state</th>
+        <th>gpu</th>
+        <th>pageable</th>
+        <th>pinned</th>
+        <th>docker image name</th>
+        <th>build id</th>
+    </tr>
+    {% for snapshot in snapshots %}
+    <tr>
+        <td>{{ snapshot["name"] }}</td>
+        <td>{{ snapshot["object"]['nodename'] }}</td>
+        <td>{{ snapshot["object"]['state'] }}</td>
+        <td>{{ snapshot["object"]['info']['gpuMemSizes'] }}</td>
+        <td>{{ snapshot["object"]['info']['processCheckpointSize'] // (1024*1024) }} MB</td>
+        <td>{{ snapshot["object"]['info']['hostMemSize'] // (1024*1024) }} MB </td>
+        <td>{{ snapshot["object"]['meta']['imagename'] }}</td>
+        <td>{{ snapshot["object"]['meta']['buildId'] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{{ hosturl }}
+{% endblock %}
