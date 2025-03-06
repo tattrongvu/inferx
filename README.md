@@ -1,1 +1,1 @@
-# inferx
+doc/home.md
