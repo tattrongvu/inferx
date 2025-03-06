@@ -8,7 +8,7 @@ ctl:
 dash:
 	mkdir -p ./target/dashboard
 	-rm ./target/dashboard/* -rf
-	cp ./dashboard/* ./target/dashboard -r
+	cp ./dashboard/* ./target/dashboard -rL
 	cp ./deployment/dashboard.Dockerfile ./target/dashboard/Dockerfile
 	-sudo docker image rm inferx/inferx_dashboard:v0.1.0
 	sudo docker build -t inferx/inferx_dashboard:v0.1.0 ./target/dashboard
