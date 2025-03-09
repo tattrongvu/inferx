@@ -1,0 +1,11 @@
+{
+    "runtimes": {
+        "nvidia": {
+            "args": [],
+            "path": "nvidia-container-runtime"
+        },
+        "inferx": {
+            "path": "/opt/inferx/bin/inferx"
+        }
+    }
+}
