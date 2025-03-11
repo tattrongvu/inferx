@@ -15,9 +15,9 @@ dash:
 	# sudo docker push inferx/inferx_dashboard:v0.1.0
 
 pushdash:
-	# sudo docker login -u inferxai
-	sudo docker tag inferx/inferx_dashboard:v0.1.0 inferxai/inferx_dashboard:v0.1.0
-	sudo docker push inferxai/inferx_dashboard:v0.1.0
+	# sudo docker login -u inferx
+	sudo docker tag inferx/inferx_dashboard:v0.1.0 inferx/inferx_dashboard:v0.1.0
+	sudo docker push inferx/inferx_dashboard:v0.1.0
 
 runmodel:
 	mkdir -p ./target/runmodel
@@ -45,12 +45,12 @@ compose:
 	sudo docker compose -f docker-compose.yml  build
 
 run:
-	- sudo rm -f /opt/inferx/log/quark.log
+	- sudo rm -f /opt/inferx/log/inferx.log
 	- sudo rm -f /opt/inferx/log/onenode.log
 	sudo docker compose -f docker-compose.yml up -d
 
 runblob:
-	- sudo rm -f /opt/inferx/log/quark.log
+	- sudo rm -f /opt/inferx/log/inferx.log
 	- sudo rm -f /opt/inferx/log/onenode.log
 	sudo docker compose -f docker-compose_blob.yml up -d
 
