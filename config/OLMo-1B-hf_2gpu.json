@@ -1,27 +1,26 @@
 {
     "type": "function",
     "tenant": "public",
-    "namespace": "nomic-ai",
-    "name": "gpt4all-j",
+    "namespace": "allenai",
+    "name": "OLMo-1B-hf_2gpu",
     "object": {
         "spec": {
             "image": "vllm/vllm-openai:v0.6.2",
             "commands": [
                 "--model",
-                "nomic-ai/gpt4all-j",
+                "allenai/OLMo-1B-hf",
                 "--disable-custom-all-reduce",
-                "--trust-remote-code",
                 "--max-model-len",
                 "2000",
                 "--tensor-parallel-size=2"
             ],
             "resources": {
-                "CPU": 20000,
+                "CPU": 12000,
                 "Mem": 50000,
                 "GPU": {
                     "Type": "Any",
                     "Count": 2,
-                    "vRam": 13800
+                    "vRam": 14600
                 }
             },
             "envs": [
@@ -43,10 +42,10 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "Here is a recipe for vegan banana bread:",
+                "prompt": "What is the capital of USA?",
                 "path": "v1/completions",
                 "body": {
-                    "model": "nomic-ai/gpt4all-j",
+                    "model": "allenai/OLMo-1B-hf",
                     "max_tokens": "1000",
                     "temperature": "0",
                     "stream": "true"

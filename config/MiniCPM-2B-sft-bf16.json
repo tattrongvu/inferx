@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "openbmb/MiniCPM-2B-sft-bf16",
-                "--enforce-eager",
                 "--trust-remote-code",
                 "--max-model-len",
                 "1200"

@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "BAAI/Aquila-7B",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",
@@ -22,7 +21,7 @@
                 "GPU": {
                     "Type": "Any",
                     "Count": 2,
-                    "vRam": 10000
+                    "vRam": 13000
                 }
             },
             "envs": [

@@ -9,11 +9,10 @@
             "commands": [
                 "--model",
                 "Deci/DeciLM-7B",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",
-                "2000",
+                "1200",
                 "--tensor-parallel-size=2"
             ],
             "resources": {

@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "tiiuae/falcon-rw-7b",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--max-model-len",
                 "2000",

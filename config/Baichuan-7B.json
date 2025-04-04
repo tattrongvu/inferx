@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "baichuan-inc/Baichuan-7B",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",

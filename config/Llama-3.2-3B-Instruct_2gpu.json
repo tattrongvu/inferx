@@ -1,18 +1,18 @@
 {
     "type": "function",
     "tenant": "public",
-    "namespace": "nomic-ai",
-    "name": "gpt4all-j",
+    "namespace": "meta-llama",
+    "name": "Llama-3.2-3B-Instruct_2gpu",
     "object": {
         "spec": {
             "image": "vllm/vllm-openai:v0.6.2",
             "commands": [
                 "--model",
-                "nomic-ai/gpt4all-j",
+                "meta-llama/Llama-3.2-3B-Instruct",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",
-                "2000",
+                "1000",
                 "--tensor-parallel-size=2"
             ],
             "resources": {
@@ -21,7 +21,7 @@
                 "GPU": {
                     "Type": "Any",
                     "Count": 2,
-                    "vRam": 13800
+                    "vRam": 14600
                 }
             },
             "envs": [
@@ -43,11 +43,11 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "Here is a recipe for vegan banana bread:",
+                "prompt": "def print_hello_world():",
                 "path": "v1/completions",
                 "body": {
-                    "model": "nomic-ai/gpt4all-j",
-                    "max_tokens": "1000",
+                    "model": "meta-llama/Llama-3.2-3B-Instruct",
+                    "max_tokens": "120",
                     "temperature": "0",
                     "stream": "true"
                 }

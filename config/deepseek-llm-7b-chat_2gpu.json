@@ -1,27 +1,29 @@
 {
     "type": "function",
     "tenant": "public",
-    "namespace": "nomic-ai",
-    "name": "gpt4all-j",
+    "namespace": "deepseek-ai",
+    "name": "deepseek-llm-7b-chat_2gpu",
     "object": {
         "spec": {
             "image": "vllm/vllm-openai:v0.6.2",
             "commands": [
                 "--model",
-                "nomic-ai/gpt4all-j",
+                "/root/.cache/huggingface/git/deepseek-llm-7b-chat",
+                "--served-model-name",
+                "deepseek-ai/deepseek-llm-7b-chat",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",
-                "2000",
+                "1000",
                 "--tensor-parallel-size=2"
             ],
             "resources": {
                 "CPU": 20000,
-                "Mem": 50000,
+                "Mem": 60000,
                 "GPU": {
                     "Type": "Any",
                     "Count": 2,
-                    "vRam": 13800
+                    "vRam": 14200
                 }
             },
             "envs": [
@@ -43,11 +45,11 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "Here is a recipe for vegan banana bread:",
+                "prompt": "what is the integral of x^2 from 0 to 2?\nPlease reason step by step, and put your final answer within \\boxed{}.",
                 "path": "v1/completions",
                 "body": {
-                    "model": "nomic-ai/gpt4all-j",
-                    "max_tokens": "1000",
+                    "model": "deepseek-ai/deepseek-llm-7b-chat",
+                    "max_tokens": "80",
                     "temperature": "0",
                     "stream": "true"
                 }

@@ -11,20 +11,21 @@
                 "/root/.cache/huggingface/git/deepseek-llm-7b-chat",
                 "--served-model-name",
                 "deepseek-ai/deepseek-llm-7b-chat",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
+                "--enforce-eager",
+                "--gpu-memory-utilization",
+                " 0.99",
                 "--max-model-len",
-                "2000",
-                "--tensor-parallel-size=2"
+                "200"
             ],
             "resources": {
                 "CPU": 20000,
                 "Mem": 60000,
                 "GPU": {
                     "Type": "Any",
-                    "Count": 2,
-                    "vRam": 13800
+                    "Count": 1,
+                    "vRam": 14600
                 }
             },
             "envs": [
@@ -50,7 +51,7 @@
                 "path": "v1/completions",
                 "body": {
                     "model": "deepseek-ai/deepseek-llm-7b-chat",
-                    "max_tokens": "1000",
+                    "max_tokens": "80",
                     "temperature": "0",
                     "stream": "true"
                 }

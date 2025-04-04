@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "bigcode/starcoder2-7b",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",

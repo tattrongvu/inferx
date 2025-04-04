@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--max-model-len",
                 "2000"
@@ -52,9 +51,9 @@
                 }
             },
             "standby": {
-                "gpu": "File",
-                "pageable": "Mem",
-                "pinned": "File"
+                "gpu": "Blob",
+                "pageable": "Blob",
+                "pinned": "Blob"
             }
         }
     }

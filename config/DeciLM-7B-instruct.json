@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "Deci/DeciLM-7B-instruct",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",
