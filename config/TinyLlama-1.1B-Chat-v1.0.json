@@ -19,7 +19,7 @@
                 "GPU": {
                     "Type": "Any",
                     "Count": 1,
-                    "vRam": 5000
+                    "vRam": 4500
                 }
             },
             "envs": [
@@ -51,9 +51,9 @@
                 }
             },
             "standby": {
-                "gpu": "Blob",
-                "pageable": "Blob",
-                "pinned": "Blob"
+                "gpu": "File",
+                "pageable": "File",
+                "pinned": "File"
             }
         }
     }

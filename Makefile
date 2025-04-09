@@ -38,21 +38,17 @@ spdk:
 sql:
 	cp ./dashboard/sql/create_table.sql /opt/inferx/config/
 
-compose_blob: 
-	sudo docker compose -f docker-compose_blob.yml  build
-
-compose: 
-	sudo docker compose -f docker-compose.yml  build
-
 run:
+	sudo docker compose -f docker-compose.yml  build
 	- sudo rm -f /opt/inferx/log/inferx.log
 	- sudo rm -f /opt/inferx/log/onenode.log
-	sudo docker compose -f docker-compose.yml up -d
+	sudo docker compose -f docker-compose.yml up -d --remove-orphans
 
 runblob:
+	sudo docker compose -f docker-compose_blob.yml  build
 	- sudo rm -f /opt/inferx/log/inferx.log
 	- sudo rm -f /opt/inferx/log/onenode.log
-	sudo docker compose -f docker-compose_blob.yml up -d
+	sudo docker compose -f docker-compose_blob.yml up -d --remove-orphans
 
 stop:
 	sudo docker compose -f docker-compose.yml down
