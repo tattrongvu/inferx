@@ -11,6 +11,20 @@ services:
       - /lib/modules/:/lib/modules/
       - /opt/inferx/:/opt/inferx/
       - /run/udev:/run/udev
+  secret_db:
+    image: postgres:14.5
+    restart: unless-stopped
+    container_name: secret_db
+    environment:
+      - POSTGRES_USER=secret
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=secretdb
+      - PGDATA=/data/postgres
+    ports:
+      - '5431:5432'
+    volumes:
+      - /opt/inferx/config/secret.sql:/docker-entrypoint-initdb.d/db.sql
+      - /opt/inferx/data/postgres_secret:/data/postgres
   db:
     image: postgres:14.5
     restart: unless-stopped

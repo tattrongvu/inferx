@@ -36,7 +36,8 @@ spdk:
 	sudo docker build -t inferx/spdk-container:v0.1.0 ./target/spdk
 
 sql:
-	cp ./dashboard/sql/create_table.sql /opt/inferx/config/
+	sudo cp ./dashboard/sql/create_table.sql /opt/inferx/config
+	sudo cp ./dashboard/sql/secret.sql /opt/inferx/config
 
 run:
 	sudo docker compose -f docker-compose.yml  build
