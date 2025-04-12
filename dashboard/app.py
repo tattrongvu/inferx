@@ -18,6 +18,7 @@ import time
 
 import requests
 import markdown
+import functools
 
 from flask import (
     Blueprint,
@@ -70,17 +71,31 @@ def home():
         return render_template_string('''
             Logged in as {{ user }}!<br>
             <a href="/logout">Logout</a>
-            <a href="/fetch_data">fetch_data</a>
             <a href="/apikeys">apikeys</a>
         ''', user=session['user'].get('preferred_username'))
-    return '<a href="/login">Login</a>'
+    return render_template_string('''
+            <a href="/apikeys">apikeys</a>
+            <a href="/login">Login</a>''')
 
+def require_login(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        current_path = request.url
+        print("apikeys ", current_path)
+        if session.get('token', '') == '':
+            redirect_uri = url_for('login', redirectpath=current_path, _external=True)
+            return redirect(redirect_uri)
+
+        return func(*args, **kwargs)
+    return wrapper
 
 @app.route('/login')
 def login():
     nonce = generate_token(20)
     session['keycloak_nonce'] = nonce
-    redirect_uri = url_for('auth_callback', _external=True)
+    redirectpath=request.args.get('redirectpath', '')
+    print("login path: ", redirectpath)
+    redirect_uri = url_for('auth_callback', redirectpath=redirectpath,  _external=True)
     return keycloak.authorize_redirect(
         redirect_uri=redirect_uri,
         nonce=nonce  # Pass nonce to Keycloak
@@ -93,6 +108,9 @@ def auth_callback():
         token = keycloak.authorize_access_token()
         nonce = session.pop('keycloak_nonce', None)
 
+        redirectpath=request.args.get('redirectpath', '')
+        print("callback path: ", redirectpath)
+
         if not nonce:
             raise Exception("Missing nonce in session")
 
@@ -100,7 +118,10 @@ def auth_callback():
         session['user'] = userinfo
         session['token'] = token.get('access_token')
         session['id_token'] = token.get('id_token')
-        return redirect(url_for('home'))
+
+        if redirectpath=='':
+            return redirect(url_for('home'))
+        return redirect(redirectpath)
     except Exception as e:
         return f"Authentication failed: {str(e)}", 403
 
@@ -140,15 +161,9 @@ def getapkkeys():
     return apikeys
 
 @app.route('/apikeys')
+@require_login
 def apikeys():
-    current_path = request.path
-    print("apikeys ", current_path)
-    if session.get('token', '') == '':
-        redirect_uri = url_for('login', _external=True)
-        return redirect(redirect_uri)
-
     apikeys = getapkkeys()
-    
     return apikeys
 
 
@@ -587,10 +602,10 @@ def run_http():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=1250, debug=True)
-    # http_thread = Thread(target=run_http)
-    # http_thread.start()
-
     if tls:
+        http_thread = Thread(target=run_http)
+        http_thread.start()
         app.run(host="0.0.0.0", port=1239, ssl_context=('/etc/letsencrypt/live/inferx.net/fullchain.pem', '/etc/letsencrypt/live/inferx.net/privkey.pem'))
         # app.run(host="0.0.0.0", port=1239, ssl_context=('/etc/letsencrypt/live/quarksoft.io/fullchain.pem', '/etc/letsencrypt/live/quarksoft.io/privkey.pem'))
+    else:
+        app.run(host='0.0.0.0', port=1250, debug=True)
