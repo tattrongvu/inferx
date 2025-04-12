@@ -23,6 +23,7 @@ from flask import (
     Blueprint,
     Flask,
     jsonify,
+    redirect, url_for, session, 
     render_template,
     render_template_string,
     request,
@@ -30,15 +31,126 @@ from flask import (
     send_from_directory
 )
 
+from authlib.integrations.flask_client import OAuth
+from authlib.common.security import generate_token 
+
 from threading import Thread
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
+KEYCLOAK_URL = "http://192.168.0.22:1260"
+REALM_NAME = "inferx"
+CLIENT_ID = "infer_client"
+CLIENT_SECRET = "SJvfmGFViBNHsLfhkto4eRE0PnPhpyft"
+REDIRECT_URI = "http://localhost:1250/auth/callback"
 
-tls = True
+server_metadata_url = "{}//realms/inferx/.well-known/openid-configuration".format(KEYCLOAK_URL)
+
+oauth = OAuth(app)
+keycloak = oauth.register(
+    name='keycloak',
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    server_metadata_url=server_metadata_url,
+    client_kwargs={
+        'scope': 'openid email profile',
+        'code_challenge_method': 'S256'  # Enable PKCE
+    }
+)
+
+tls = False
 
 apihostaddr = "http://localhost:4000"
 # apihostaddr = "https://quarksoft.io:4000"
+
+@app.route('/test')
+def home():
+    if 'user' in session:
+        return render_template_string('''
+            Logged in as {{ user }}!<br>
+            <a href="/logout">Logout</a>
+            <a href="/fetch_data">fetch_data</a>
+            <a href="/apikeys">apikeys</a>
+        ''', user=session['user'].get('preferred_username'))
+    return '<a href="/login">Login</a>'
+
+
+@app.route('/login')
+def login():
+    nonce = generate_token(20)
+    session['keycloak_nonce'] = nonce
+    redirect_uri = url_for('auth_callback', _external=True)
+    return keycloak.authorize_redirect(
+        redirect_uri=redirect_uri,
+        nonce=nonce  # Pass nonce to Keycloak
+    )
+
+@app.route('/auth/callback')
+def auth_callback():
+    try:
+        # Retrieve token and validate nonce
+        token = keycloak.authorize_access_token()
+        nonce = session.pop('keycloak_nonce', None)
+
+        if not nonce:
+            raise Exception("Missing nonce in session")
+
+        userinfo = keycloak.parse_id_token(token, nonce=nonce)  # Validate nonce
+        session['user'] = userinfo
+        session['token'] = token.get('access_token')
+        session['id_token'] = token.get('id_token')
+        return redirect(url_for('home'))
+    except Exception as e:
+        return f"Authentication failed: {str(e)}", 403
+
+@app.route('/logout')
+def logout():
+    # Keycloak logout endpoint
+    end_session_endpoint = (
+        f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/logout"
+    )
+    
+    # Clear local session
+    # session.clear()
+    print("end_session_endpoint ", end_session_endpoint)
+
+    print("id_token ", session.get('id_token', ''))
+
+    id_token = session.get('id_token', '')
+    # return redirect(end_session_endpoint)
+
+    session.clear()
+    # # Redirect to Keycloak to clear SSO session
+    return redirect(
+        f"{end_session_endpoint}?"
+        f"post_logout_redirect_uri={url_for('home', _external=True)}&"
+        f"id_token_hint={id_token}"
+    )
+
+def getapkkeys():
+    access_token = session.get('token', '')
+    # Include the access token in the Authorization header
+    headers = {'Authorization': f'Bearer {access_token}'}
+    
+    url = "{}/apikey/".format(apihostaddr)
+    resp = requests.get(url, headers=headers)
+    apikeys = json.loads(resp.content)
+
+    return apikeys
+
+@app.route('/apikeys')
+def apikeys():
+    current_path = request.path
+    print("apikeys ", current_path)
+    if session.get('token', '') == '':
+        redirect_uri = url_for('login', _external=True)
+        return redirect(redirect_uri)
+
+    apikeys = getapkkeys()
+    
+    return apikeys
+
 
 def read_markdown_file(filename):
     """Read and convert Markdown file to HTML"""
@@ -471,12 +583,13 @@ def GetFailPod():
     )
 
 def run_http():
-    app.run(host='0.0.0.0', port=1250, debug=False)
+    app.run(host='0.0.0.0', port=1250, debug=True)
 
 
 if __name__ == "__main__":
-    http_thread = Thread(target=run_http)
-    http_thread.start()
+    app.run(host='0.0.0.0', port=1250, debug=True)
+    # http_thread = Thread(target=run_http)
+    # http_thread.start()
 
     if tls:
         app.run(host="0.0.0.0", port=1239, ssl_context=('/etc/letsencrypt/live/inferx.net/fullchain.pem', '/etc/letsencrypt/live/inferx.net/privkey.pem'))
