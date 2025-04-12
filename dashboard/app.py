@@ -164,8 +164,35 @@ def getapkkeys():
 @require_login
 def apikeys():
     apikeys = getapkkeys()
+    print("apikeys: ", apikeys)
+    return render_template(
+        "apikey.html", apikeys=apikeys
+    )
+
+@app.route('/generate_apikeys', methods=['GET'])
+def generate_apikeys():
+    apikeys = getapkkeys()
+    print("generate_apikeys: ", apikeys)
     return apikeys
 
+@app.route('/apikeys', methods=['PUT'])
+def create_apikey():
+    access_token = session.get('token', '')
+    headers = {'Authorization': f'Bearer {access_token}'}
+    req = request.get_json()
+    url = "{}/apikey/".format(apihostaddr)
+    resp = requests.put(url, headers=headers, json=req)
+    return resp
+
+@app.route('/apikeys', methods=['DELETE'])
+def delete_apikey():
+    access_token = session.get('token', '')
+    headers = {'Authorization': f'Bearer {access_token}'}
+    req = request.get_json()
+    print("delete_apikey req ", req)
+    url = "{}/apikey/".format(apihostaddr)
+    resp = requests.delete(url, headers=headers, json=req)
+    return resp
 
 def read_markdown_file(filename):
     """Read and convert Markdown file to HTML"""
