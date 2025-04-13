@@ -49,6 +49,7 @@ REDIRECT_URI = "http://localhost:1250/auth/callback"
 server_metadata_url = "{}//realms/inferx/.well-known/openid-configuration".format(KEYCLOAK_URL)
 
 oauth = OAuth(app)
+
 keycloak = oauth.register(
     name='keycloak',
     client_id=CLIENT_ID,
@@ -64,6 +65,35 @@ tls = False
 
 apihostaddr = "http://localhost:4000"
 # apihostaddr = "https://quarksoft.io:4000"
+
+def is_token_expired():
+    # Check if token exists and has expiration time
+    if 'token' not in session:
+        return True
+    
+    token = session['token']
+    return token.get('expires_at', 0) < time.time()
+
+def refresh_token_if_needed():
+    if 'token' not in session:
+        return False
+    
+    token = session['token']
+    if is_token_expired():
+        try:
+            new_token = keycloak.fetch_access_token(
+                refresh_token=token['refresh_token'],
+                grant_type='refresh_token'
+            )
+            session['token'] = new_token
+            session['access_token'] = new_token['access_token']
+            return True
+        except Exception as e:
+            # Handle refresh error (e.g., invalid refresh token)
+            print(f"Token refresh failed: {e}")
+            session.pop('token', None)
+            return False
+    return True
 
 @app.route('/test')
 def home():
@@ -81,9 +111,10 @@ def require_login(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         current_path = request.url
-        print("apikeys ", current_path)
-        if session.get('token', '') == '':
-            redirect_uri = url_for('login', redirectpath=current_path, _external=True)
+        redirect_uri = url_for('login', redirectpath=current_path, _external=True)
+        if 'token' not in session:
+            return redirect(redirect_uri)
+        if is_token_expired() and not refresh_token_if_needed():
             return redirect(redirect_uri)
 
         return func(*args, **kwargs)
@@ -94,7 +125,6 @@ def login():
     nonce = generate_token(20)
     session['keycloak_nonce'] = nonce
     redirectpath=request.args.get('redirectpath', '')
-    print("login path: ", redirectpath)
     redirect_uri = url_for('auth_callback', redirectpath=redirectpath,  _external=True)
     return keycloak.authorize_redirect(
         redirect_uri=redirect_uri,
@@ -109,14 +139,14 @@ def auth_callback():
         nonce = session.pop('keycloak_nonce', None)
 
         redirectpath=request.args.get('redirectpath', '')
-        print("callback path: ", redirectpath)
-
+    
         if not nonce:
             raise Exception("Missing nonce in session")
 
         userinfo = keycloak.parse_id_token(token, nonce=nonce)  # Validate nonce
         session['user'] = userinfo
-        session['token'] = token.get('access_token')
+        session['access_token'] = token.get('access_token')
+        session['token'] = token
         session['id_token'] = token.get('id_token')
 
         if redirectpath=='':
@@ -132,12 +162,6 @@ def logout():
         f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/logout"
     )
     
-    # Clear local session
-    # session.clear()
-    print("end_session_endpoint ", end_session_endpoint)
-
-    print("id_token ", session.get('id_token', ''))
-
     id_token = session.get('id_token', '')
     # return redirect(end_session_endpoint)
 
@@ -150,7 +174,7 @@ def logout():
     )
 
 def getapkkeys():
-    access_token = session.get('token', '')
+    access_token = session.get('token')['access_token']
     # Include the access token in the Authorization header
     headers = {'Authorization': f'Bearer {access_token}'}
     
@@ -164,20 +188,20 @@ def getapkkeys():
 @require_login
 def apikeys():
     apikeys = getapkkeys()
-    print("apikeys: ", apikeys)
     return render_template(
         "apikey.html", apikeys=apikeys
     )
 
 @app.route('/generate_apikeys', methods=['GET'])
+@require_login
 def generate_apikeys():
     apikeys = getapkkeys()
-    print("generate_apikeys: ", apikeys)
     return apikeys
 
 @app.route('/apikeys', methods=['PUT'])
+@require_login
 def create_apikey():
-    access_token = session.get('token', '')
+    access_token = session.get('access_token', '')
     headers = {'Authorization': f'Bearer {access_token}'}
     req = request.get_json()
     url = "{}/apikey/".format(apihostaddr)
@@ -185,11 +209,11 @@ def create_apikey():
     return resp
 
 @app.route('/apikeys', methods=['DELETE'])
+@require_login
 def delete_apikey():
-    access_token = session.get('token', '')
+    access_token = session.get('access_token', '')
     headers = {'Authorization': f'Bearer {access_token}'}
     req = request.get_json()
-    print("delete_apikey req ", req)
     url = "{}/apikey/".format(apihostaddr)
     resp = requests.delete(url, headers=headers, json=req)
     return resp
