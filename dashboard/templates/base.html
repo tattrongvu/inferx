@@ -34,7 +34,7 @@
                     (contact: support@inferx.net)</</h2>
         </td>
     </table>
-
+    <a href="#" id="login_logout" style="float:right">Action</a>
     <hr>
     <nav>
         <a href="{{ hosturl }}intro?name=home.md"> Introduction </a>
@@ -43,7 +43,22 @@
         <a href="{{ hosturl }}listsnapshot"> Snapshots </a>
         <a href="{{ hosturl }}listnode"> Nodes </a>
         <a href="{{ hosturl }}apikeys"> Apikeys </a>
+
     </nav>
+    <script>
+        const usernam = "{{ session['username'] }}";
+        const link = document.querySelector('#login_logout');
+        if (usernam == "") {
+            const currentUrl = window.location.href;
+            link.href = '{{ hosturl }}' + "login";
+            link.textContent = 'login'
+        } else {
+            link.href = '{{ hosturl }}' + "logout";
+            link.textContent = "logout(" + usernam + ")";
+        }
+
+
+    </script>
     <hr>
     <div class="content">
         {% block content %} {% endblock %}

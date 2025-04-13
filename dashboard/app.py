@@ -95,18 +95,6 @@ def refresh_token_if_needed():
             return False
     return True
 
-@app.route('/test')
-def home():
-    if 'user' in session:
-        return render_template_string('''
-            Logged in as {{ user }}!<br>
-            <a href="/logout">Logout</a>
-            <a href="/apikeys">apikeys</a>
-        ''', user=session['user'].get('preferred_username'))
-    return render_template_string('''
-            <a href="/apikeys">apikeys</a>
-            <a href="/login">Login</a>''')
-
 def require_login(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -145,12 +133,13 @@ def auth_callback():
 
         userinfo = keycloak.parse_id_token(token, nonce=nonce)  # Validate nonce
         session['user'] = userinfo
+        session['username'] = userinfo.get('preferred_username')
         session['access_token'] = token.get('access_token')
         session['token'] = token
         session['id_token'] = token.get('id_token')
 
         if redirectpath=='':
-            return redirect(url_for('home'))
+            return redirect(url_for('ListFunc'))
         return redirect(redirectpath)
     except Exception as e:
         return f"Authentication failed: {str(e)}", 403
@@ -169,7 +158,7 @@ def logout():
     # # Redirect to Keycloak to clear SSO session
     return redirect(
         f"{end_session_endpoint}?"
-        f"post_logout_redirect_uri={url_for('home', _external=True)}&"
+        f"post_logout_redirect_uri={url_for('ListFunc', _external=True)}&"
         f"id_token_hint={id_token}"
     )
 
