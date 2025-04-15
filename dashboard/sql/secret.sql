@@ -9,10 +9,10 @@ CREATE TABLE Apikey (
 
 CREATE UNIQUE INDEX apikey_idx_realm_username ON Apikey (username, keyname);
 
-CREATE TABLE UserGroup (
+CREATE TABLE UserRole (
     username        VARCHAR NOT NULL,
-    groupname       VARCHAR NOT NULL,
-    PRIMARY KEY(username, groupname)
+    rolename       VARCHAR NOT NULL,
+    PRIMARY KEY(username, rolename)
 );
 
-CREATE INDEX usergroup_idx_groupname ON UserGroup (groupname);
+CREATE INDEX userrole_idx_rolename ON UserRole (rolename);
