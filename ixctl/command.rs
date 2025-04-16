@@ -34,6 +34,7 @@ pub const INFX_GATEWAY_URL: &str = "INFX_GATEWAY_URL";
 
 pub struct GlobalConfig {
     pub gatewayUrl: String,
+    pub accessToken: String,
 }
 
 impl GlobalConfig {
@@ -107,6 +108,7 @@ pub fn Parse() -> Result<Arguments> {
 
     let gConfig = GlobalConfig {
         gatewayUrl: gatewayUrl,
+        accessToken: "".to_owned(),
     };
 
     let args = match matches.subcommand() {

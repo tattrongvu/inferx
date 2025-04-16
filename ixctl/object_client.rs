@@ -1,5 +1,6 @@
 use hyper::StatusCode;
 use inferxlib::data_obj::DataObject;
+use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
 use std::time::Duration;
 
@@ -56,10 +57,18 @@ impl ObjectClient {
         return Ok(obj);
     }
 
-    pub async fn Create(&self, obj: DataObject<Value>) -> Result<i64> {
+    pub async fn Create(&self, token: &str, obj: DataObject<Value>) -> Result<i64> {
         let client = self.Client();
         let url = format!("{}/object/", &self.url);
-        let resp = client.put(&url).json(&obj).send().await?;
+        println!("Create url {}", &url);
+        let mut headers = HeaderMap::new();
+        if token.len() > 0 {
+            headers.insert(
+                "Authorization",
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
+        }
+        let resp = client.put(&url).headers(headers).json(&obj).send().await?;
         let code = resp.status().as_u16();
         if code == StatusCode::OK {
             let res = resp.text().await?;
@@ -81,10 +90,17 @@ impl ObjectClient {
         )));
     }
 
-    pub async fn Update(&self, obj: DataObject<Value>) -> Result<i64> {
+    pub async fn Update(&self, token: &str, obj: DataObject<Value>) -> Result<i64> {
         let client = self.Client();
         let url = format!("{}/object/", &self.url);
-        let resp = client.post(&url).json(&obj).send().await?;
+        let mut headers = HeaderMap::new();
+        if token.len() > 0 {
+            headers.insert(
+                "Authorization",
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
+        }
+        let resp = client.post(&url).headers(headers).json(&obj).send().await?;
         let code = resp.status().as_u16();
         if code == StatusCode::OK {
             let res = resp.text().await?;
@@ -108,6 +124,7 @@ impl ObjectClient {
 
     pub async fn Delete(
         &self,
+        token: &str,
         objType: &str,
         tenant: &str,
         namespace: &str,
@@ -118,8 +135,15 @@ impl ObjectClient {
             "{}/object/{objType}/{tenant}/{namespace}/{name}/",
             &self.url
         );
+        let mut headers = HeaderMap::new();
+        if token.len() > 0 {
+            headers.insert(
+                "Authorization",
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
+        }
 
-        let resp = client.delete(&url).send().await?;
+        let resp = client.delete(&url).headers(headers).send().await?;
         let code = resp.status().as_u16();
         let content = resp.text().await?;
         println!("Delete response is {:?} content {}", code, content);

@@ -1,4 +1,7 @@
 export INFX_GATEWAY_URL="http://localhost:4000"
+export IFERX_SECRET="SJvfmGFViBNHsLfhkto4eRE0PnPhpyft"
+export IFERX_USERNAME="testuser1"
+export IFERX_PASSWORD="test"
 /opt/inferx/bin/ixctl create public.json
 
 #######################################################

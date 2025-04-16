@@ -71,7 +71,13 @@ impl DeleteCmd {
         println!("Deletecmd is {:?}", self);
 
         let _version = client
-            .Delete(&self.objType, &self.tenant, &self.namespace, &self.name)
+            .Delete(
+                &gConfig.accessToken,
+                &self.objType,
+                &self.tenant,
+                &self.namespace,
+                &self.name,
+            )
             .await?;
 
         return Ok(());

@@ -14,8 +14,8 @@
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 
-use inferxlib::data_obj::DataObject;
 use inferxlib::common::*;
+use inferxlib::data_obj::DataObject;
 use serde_json::Value;
 
 use crate::command::GlobalConfig;
@@ -66,9 +66,9 @@ impl CreateCmd {
             Ok(c) => c,
         };
 
-        // let client = ObjectClient::New("http://localhost:4000");
+        println!("CreateCmd obj is {:#?}", &o);
         let client = gConfig.GetObjectClient();
-        let version = client.Create(o.clone()).await?;
+        let version = client.Create(&gConfig.accessToken, o.clone()).await?;
 
         let obj = o.CopyWithRev(version, version);
 
