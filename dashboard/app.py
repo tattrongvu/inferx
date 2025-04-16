@@ -191,7 +191,10 @@ def generate_apikeys():
 @require_login
 def create_apikey():
     access_token = session.get('access_token', '')
-    headers = {'Authorization': f'Bearer {access_token}'}
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     req = request.get_json()
     url = "{}/apikey/".format(apihostaddr)
     resp = requests.put(url, headers=headers, json=req)
@@ -201,7 +204,10 @@ def create_apikey():
 @require_login
 def delete_apikey():
     access_token = session.get('access_token', '')
-    headers = {'Authorization': f'Bearer {access_token}'}
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     req = request.get_json()
     url = "{}/apikey/".format(apihostaddr)
     resp = requests.delete(url, headers=headers, json=req)
@@ -227,16 +233,26 @@ def ReadFuncLog(namespace: str, funcId: str) -> str:
 
 
 def listfuncs(tenant: str, namespace: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/functions/{}/{}/".format(apihostaddr, tenant, namespace)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     funcs = json.loads(resp.content)  
 
     return funcs
 
 
 def getfunc(tenant: str, namespace: str, funcname: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/function/{}/{}/{}/".format(apihostaddr, tenant, namespace, funcname)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     func = json.loads(resp.content)
     return func
 
