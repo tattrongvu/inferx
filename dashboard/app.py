@@ -271,7 +271,7 @@ def listsnapshots(tenant: str, namespace: str):
 
 def listnodes():
     url = "{}/nodes/".format(apihostaddr)
-    resp = requests.get(url, headers=headers)
+    resp = requests.get(url)
     nodes = json.loads(resp.content)
 
     return nodes
