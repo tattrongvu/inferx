@@ -258,15 +258,20 @@ def getfunc(tenant: str, namespace: str, funcname: str):
 
 
 def listsnapshots(tenant: str, namespace: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/snapshots/{}/{}/".format(apihostaddr, tenant, namespace)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     func = json.loads(resp.content)
     return func
 
 
 def listnodes():
     url = "{}/nodes/".format(apihostaddr)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     nodes = json.loads(resp.content)
 
     return nodes
@@ -281,56 +286,86 @@ def getnode(name: str):
 
 
 def listpods(tenant: str, namespace: str, funcname: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/pods/{}/{}/{}/".format(apihostaddr, tenant, namespace, funcname)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     pods = json.loads(resp.content)
 
     return pods
 
 
 def getpod(tenant: str, namespace: str, podname: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/pod/{}/".format(apihostaddr, podname)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     pod = json.loads(resp.content)
 
     return pod
 
 
 def getpodaudit(tenant: str, namespace: str, fpname: str, fprevision: int, id: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/podauditlog/{}/{}/{}/{}/{}/".format(
         apihostaddr, tenant, namespace, fpname, fprevision, id
     )
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     logs = json.loads(resp.content)
 
     return logs
 
 
 def GetFailLogs(tenant: str, namespace: str, funcname: str, revision: int):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/faillogs/{}/{}/{}/{}".format(
         apihostaddr, tenant, namespace, funcname, revision
     )
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     print("GetFailLogs  ", resp.content)
     fails = json.loads(resp.content)
     return fails
 
 
 def GetFailLog(tenant: str, namespace: str, funcname: str, revision: int, id: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/faillog/{}/{}/{}/{}/{}".format(
         apihostaddr, tenant, namespace, funcname, revision, id
     )
     resp = requests.get(url)
-    fail = json.loads(resp.content)
+    fail = json.loads(resp.content, headers=headers)
     fail["log"] = fail["log"].replace("\n", "<br>")
     return fail["log"]
 
 
 def readpodlog(tenant: str, namespace: str, funcname: str, version: int, id: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/podlog/{}/{}/{}/{}/{}/".format(
         apihostaddr, tenant, namespace, funcname, version, id
     )
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     log = resp.content.decode()
     log = log.replace("\n", "<br>")
     log = log.replace("    ", "&emsp;")
@@ -338,13 +373,27 @@ def readpodlog(tenant: str, namespace: str, funcname: str, version: int, id: str
 
 
 def getrest(tenant: str, namespace: str, name: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     req = "{}/sampleccall/{}/{}/{}/".format(apihostaddr, tenant, namespace, name)
-    resp = requests.get(req, stream=False).text
+    resp = requests.get(req, stream=False, headers=headers).text
     return resp
 
 
 @app.route('/text2img', methods=['POST'])
 def text2img():
+    if access_token == "":
+        headers = {
+            "Content-Type": "application/json",
+        }
+    else:
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            "Content-Type": "application/json",
+        }
     req = request.get_json()
     
     print("text2img req ", req)
@@ -366,10 +415,6 @@ def text2img():
         postreq[key] = value
 
     url = "{}/funccall/{}/{}/{}/{}".format(apihostaddr, tenant, namespace, funcname, sample["path"] )
-    
-    headers = {
-        "Content-Type": "application/json",
-    }
 
     # Stream the response from OpenAI API
     resp = requests.post(url, headers=headers, json=postreq, stream=True)
@@ -382,6 +427,16 @@ def text2img():
 
 @app.route('/generate', methods=['POST'])
 def generate():
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {
+            "Content-Type": "application/json",
+        }
+    else:
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            "Content-Type": "application/json",
+        }
     # Parse input JSON from the request
     req = request.get_json()
     
@@ -408,10 +463,6 @@ def generate():
         postreq[key] = value
 
     url = "{}/funccall/{}/{}/{}/{}".format(apihostaddr, tenant, namespace, funcname, sample["path"] )
-    
-    headers = {
-        "Content-Type": "application/json",
-    }
 
     # Stream the response from OpenAI API
     response = requests.post(url, headers=headers, json=postreq, stream=True)
