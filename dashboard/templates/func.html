@@ -59,7 +59,7 @@
     <img id="processing" style="display:none;" src="{{ url_for('static', filename='button.gif') }}" />
     <div id="go"> Go </div>
 </button>
-
+<button id="cancel" onclick="cancel()" disabled>Cancel</button>
 
 <h2>
     <div id="startDiv"></div>
@@ -111,6 +111,12 @@
     const map = {{ map | tojson }};
     const path = {{ path | tojson }};
 
+    async function cancel() {
+        if (abortController) {
+            abortController.abort();
+        }
+    }
+
     async function streamOutput() {
         if (apiType == "text2img") {
             await streamOutputImage();
@@ -121,12 +127,20 @@
 
     async function streamOutputText() {
         const button = document.getElementById('button');
+        const cancelBtn = document.getElementById('cancel');
         const outputDiv = document.getElementById('output');
         const debugDiv = document.getElementById('debug');
         const tpsDiv = document.getElementById('tpsDiv');
         const prompt = document.getElementById('prompt').value;
         const image = document.getElementById('image').value;
 
+        cancelBtn.addEventListener('click', () => {
+            if (abortController) {
+                abortController.abort();
+            }
+        });
+
+        cancelBtn.disabled = false;
         const llvm = true;
         outputDiv.innerHTML = ""
         try {
@@ -141,6 +155,9 @@
             const port = window.location.port;
             const schema = window.location.protocol;
 
+            abortController = new AbortController();
+            const { signal } = abortController;
+
             url = schema + "//" + hostname + ":" + port + "/proxy/funccall/" + tenant + "/" + namespace + "/" + name + "/" + path;
             map["prompt"] = prompt;
             const body = {
@@ -149,19 +166,18 @@
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(map)
+                body: JSON.stringify(map),
+                signal
             };
 
             const response = await fetch(url, body);
-            debugDiv.innerHTML = "";
             processImage.style = "display:none;"
             buttonTxt.style = "";
-
-            debugDiv.innerHTML = JSON.stringify(map);
 
             const restore = response.headers.get("tcpconn_latency_header");
             const ttft = response.headers.get("ttft_latency_header");
             const contentType = response.headers.get("content-type");
+            debugDiv.innerHTML = "";
 
             const startDiv = document.getElementById('startDiv');
             const ttftDiv = document.getElementById('ttftDiv');
@@ -173,7 +189,6 @@
                 button.disabled = false;
                 return
             }
-
             const reader = response.body.getReader();
             const decoder = new TextDecoder('utf-8');
             let done = false;
@@ -220,13 +235,15 @@
             }
 
         } catch (error) {
-            outputDiv.innerHTML += error + '<br>';
-            outputDiv.innerHTML += error.cause + '<br>';
-            console.error('Error fetching HTML:', error);
+            // outputDiv.innerHTML += error + '<br>';
+            // outputDiv.innerHTML += error.cause + '<br>';
+            // console.error('Error fetching HTML:', error);
             button.disabled = false;
+            cancelBtn.disabled = true;
         }
 
         button.disabled = false;
+        cancelBtn.disabled = true;
     }
 
     async function streamOutputImage() {
