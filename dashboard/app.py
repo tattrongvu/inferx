@@ -424,6 +424,39 @@ def text2img():
     headers = [(name, value) for (name, value) in resp.raw.headers.items() if name.lower() not in excluded_headers]
     return Response(resp.iter_content(1024000), resp.status_code, headers)
 
+def stream_response(response):
+    try:
+        for chunk in response.iter_content(chunk_size=128):
+            yield chunk
+    finally:
+        response.close()
+
+@app.route('/proxy/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
+def proxy(path):
+    # Construct the full URL for the backend request
+    url = f"{apihostaddr}/{path}"
+
+    try:
+        resp = requests.request(
+            method=request.method,
+            url=url,
+            headers={key: value for key, value in request.headers if key.lower() != 'host'},
+            data=request.get_data(),
+            cookies=request.cookies,
+            allow_redirects=False,
+            stream=True
+        )
+    except requests.exceptions.RequestException as e:
+        return Response(f"Error connecting to backend server: {e}", status=502)
+    
+    # Exclude hop-by-hop headers as per RFC 2616 section 13.5.1
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(name, value) for name, value in resp.raw.headers.items() if name.lower() not in excluded_headers]
+    
+    # Create a Flask response object with the backend server's response
+    response = Response(stream_response(resp), resp.status_code, headers)
+    return response
+
 
 @app.route('/generate', methods=['POST'])
 def generate():
@@ -534,6 +567,7 @@ def funclog():
         "log.html", namespace=namespace, funcId=funcId, funcName=funcName, log=output
     )
 
+
 @app.route("/")
 @app.route("/listfunc")
 def ListFunc():
@@ -596,6 +630,7 @@ def GetFunc():
     func = getfunc(tenant, namespace, name)
     
     sample = func["func"]["object"]["spec"]["sample_query"]
+    map = sample["body"]
     apiType = sample["apiType"]
 
     version = func["func"]["object"]["spec"]["version"]
@@ -614,7 +649,9 @@ def GetFunc():
         func=func,
         fails=fails,
         funcspec=funcspec,
-        apiType=apiType
+        apiType=apiType,
+        map=map,
+        path=sample["path"]
     )
 
 
