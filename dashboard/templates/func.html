@@ -221,7 +221,7 @@
                                 outputDiv.innerHTML += content;
                                 tokenCount += 1;
                                 const elapsed = (Date.now() - startTime) / 1000;
-                                tpsDiv.innerHTML = "Token / Second: " + (tokenCount / elapsed).toFixed(0);
+                                tpsDiv.innerHTML = "TPS: " + (tokenCount / elapsed).toFixed(0) + "     Tokens: " + tokenCount;
                                 // tpsDisplay.textContent = (tokenCount / elapsed).toFixed(2);
                             }
                         } catch (err) {
