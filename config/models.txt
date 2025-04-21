@@ -60,6 +60,7 @@ export IFERX_PASSWORD="test"
 
 /opt/inferx/bin/ixctl create Mistral-7B-v0.1.json
 
+/opt/inferx/bin/ixctl delete namespace public system mistralai
 
 /opt/inferx/bin/ixctl delete function public mistralai Mistral-7B-v0.1
 /opt/inferx/bin/ixctl delete function public mistralai Mistral-7B-v0.1_2gpu
@@ -101,7 +102,7 @@ export IFERX_PASSWORD="test"
 #######################################################
 /opt/inferx/bin/ixctl create Deci_namespace.json
 /opt/inferx/bin/ixctl create DeciLM-7B.json
-/opt/inferx/bin/ixctl create DeciLM-7B-instruct.json
+#/opt/inferx/bin/ixctl create DeciLM-7B-instruct.json
 
 /opt/inferx/bin/ixctl delete function public Deci DeciLM-7B
 /opt/inferx/bin/ixctl delete function public Deci DeciLM-7B-instruct

@@ -210,7 +210,8 @@
                     }
 
                     if (true) {
-                        const jsonStr = line.replace(/^data: /, '') + left;
+                        left += line;
+                        const jsonStr = left.replace(/^data: /, '');
                         left = ""
                         // debugDiv.innerHTML += jsonStr + "\n\n";
                         try {
