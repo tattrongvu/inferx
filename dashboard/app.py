@@ -95,6 +95,23 @@ def refresh_token_if_needed():
             return False
     return True
 
+def not_require_login(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        access_token = session.get('access_token', '')
+        if access_token == "":
+            return func(*args, **kwargs)
+
+        current_path = request.url
+        redirect_uri = url_for('login', redirectpath=current_path, _external=True)
+        if 'token' not in session:
+            return redirect(redirect_uri)
+        if is_token_expired() and not refresh_token_if_needed():
+            return redirect(redirect_uri)
+
+        return func(*args, **kwargs)
+    return wrapper
+
 def require_login(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -384,6 +401,7 @@ def getrest(tenant: str, namespace: str, name: str):
 
 
 @app.route('/text2img', methods=['POST'])
+@not_require_login
 def text2img():
     access_token = session.get('access_token', '')
     if access_token == "":
@@ -433,6 +451,7 @@ def stream_response(response):
         response.close()
 
 @app.route('/proxy/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
+@not_require_login
 def proxy(path):
     access_token = session.get('access_token', '')
     headers = {key: value for key, value in request.headers if key.lower() != 'host'}
@@ -490,6 +509,7 @@ def funclog():
 
 @app.route("/")
 @app.route("/listfunc")
+@not_require_login
 def ListFunc():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -526,6 +546,7 @@ def ListFunc():
 
 
 @app.route("/listsnapshot")
+@not_require_login
 def ListSnapshot():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -542,6 +563,7 @@ def ListSnapshot():
 
 
 @app.route("/func", methods=("GET", "POST"))
+@not_require_login
 def GetFunc():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -577,6 +599,7 @@ def GetFunc():
 
 # @app.route("/")
 @app.route("/listnode")
+@not_require_login
 def ListNode():
     nodes = listnodes()
 
@@ -591,6 +614,7 @@ def ListNode():
 
 
 @app.route("/node")
+@not_require_login
 def GetNode():
     name = request.args.get("name")
     node = getnode(name)
@@ -603,6 +627,7 @@ def GetNode():
 
 
 @app.route("/listpod")
+@not_require_login
 def ListPod():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -619,6 +644,7 @@ def ListPod():
 
 
 @app.route("/pod")
+@not_require_login
 def GetPod():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -642,6 +668,7 @@ def GetPod():
 
 
 @app.route("/failpod")
+@not_require_login
 def GetFailPod():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
