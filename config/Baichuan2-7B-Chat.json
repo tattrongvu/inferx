@@ -43,7 +43,7 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "解释一下'温故而知新'",
+                "prompt": "Give me a short introduction to large language model.",
                 "path": "v1/completions",
                 "body": {
                     "model": "baichuan-inc/Baichuan2-7B-Chat",

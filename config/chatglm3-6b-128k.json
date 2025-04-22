@@ -44,7 +44,7 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "晚上睡不着应该怎么办",
+                "prompt": "Give me a short introduction to large language model.",
                 "path": "v1/completions",
                 "body": {
                     "model": "THUDM/chatglm3-6b-128k",

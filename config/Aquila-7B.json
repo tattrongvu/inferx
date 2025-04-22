@@ -43,7 +43,7 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "汽车EDR是什么",
+                "prompt": "Here is a recipe for vegan banana bread:",
                 "path": "v1/completions",
                 "body": {
                     "model": "BAAI/Aquila-7B",

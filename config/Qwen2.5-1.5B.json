@@ -41,7 +41,7 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "登鹳雀楼->王之涣\n夜雨寄北->",
+                "prompt": "Can you provide ways to eat combinations of bananas and dragonfruits?",
                 "path": "v1/completions",
                 "body": {
                     "model": "Qwen/Qwen2.5-1.5B",
