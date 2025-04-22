@@ -9,11 +9,10 @@
             "commands": [
                 "--model",
                 "mosaicml/mpt-7b-storywriter",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",
-                "2000",
+                "1000",
                 "--tensor-parallel-size=2"
             ],
             "resources": {
@@ -48,7 +47,7 @@
                 "path": "v1/completions",
                 "body": {
                     "model": "mosaicml/mpt-7b-storywriter",
-                    "max_tokens": "1000",
+                    "max_tokens": "800",
                     "temperature": "0",
                     "stream": "true"
                 }

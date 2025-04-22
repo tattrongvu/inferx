@@ -1,27 +1,25 @@
 {
     "type": "function",
-    "tenant": "public",
-    "namespace": "nomic-ai",
-    "name": "gpt4all-j",
+    "tenant": "t1",
+    "namespace": "ns1",
+    "name": "TinyLlama-1.1B-Chat-v1.0_test",
     "object": {
         "spec": {
-            "image": "vllm/vllm-openai:v0.6.2",
+            "image": "vllm/vllm-openai:v0.4.2",
             "commands": [
                 "--model",
-                "nomic-ai/gpt4all-j",
+                "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "--disable-custom-all-reduce",
-                "--trust-remote-code",
                 "--max-model-len",
-                "2000",
-                "--tensor-parallel-size=2"
+                "2000"
             ],
             "resources": {
                 "CPU": 20000,
-                "Mem": 50000,
+                "Mem": 18000,
                 "GPU": {
                     "Type": "Any",
-                    "Count": 2,
-                    "vRam": 13800
+                    "Count": 1,
+                    "vRam": 4500
                 }
             },
             "envs": [
@@ -43,19 +41,19 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "Here is a recipe for vegan banana bread:",
+                "prompt": "Seattle is a",
                 "path": "v1/completions",
                 "body": {
-                    "model": "nomic-ai/gpt4all-j",
+                    "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                     "max_tokens": "1000",
                     "temperature": "0",
                     "stream": "true"
                 }
             },
             "standby": {
-                "gpu": "Blob",
-                "pageable": "Blob",
-                "pinned": "Blob"
+                "gpu": "File",
+                "pageable": "File",
+                "pinned": "File"
             }
         }
     }

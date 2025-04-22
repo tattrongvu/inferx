@@ -32,6 +32,11 @@ pub mod list;
 pub mod object_client;
 pub mod update;
 
+use oauth2::{
+    basic::BasicClient, reqwest::async_http_client, AuthUrl, ClientId, ClientSecret,
+    ResourceOwnerPassword, ResourceOwnerUsername, TokenResponse, TokenUrl,
+};
+
 use command::{Parse, Run};
 use inferxlib::common::*;
 
@@ -41,6 +46,7 @@ pub struct ClientConfig {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let accessToken = AuthN().await;
     let mut args = match Parse() {
         Ok(args) => args,
         Err(e) => {
@@ -49,7 +55,88 @@ async fn main() -> Result<()> {
         }
     };
 
+    args.gConfig.accessToken = accessToken;
+
     Run(&mut args).await?;
 
     return Ok(());
+}
+
+pub struct Credential {
+    pub secret: String,
+    pub username: String,
+    pub password: String,
+}
+
+pub enum Authorization {
+    Credential(Credential),
+    Apikey(String),
+    None,
+}
+
+fn GetCred() -> Authorization {
+    match std::env::var("IFERX_APIKEY") {
+        Ok(s) => return Authorization::Apikey(s),
+        Err(_) => (),
+    };
+
+    let secret = match std::env::var("IFERX_SECRET") {
+        Ok(s) => s,
+        Err(_) => return Authorization::None,
+    };
+
+    let username = match std::env::var("IFERX_USERNAME") {
+        Ok(s) => s,
+        Err(_) => return Authorization::None,
+    };
+
+    let password = match std::env::var("IFERX_PASSWORD") {
+        Ok(s) => s,
+        Err(_) => return Authorization::None,
+    };
+
+    let credential = Credential {
+        secret: secret,
+        username: username,
+        password: password,
+    };
+
+    return Authorization::Credential(credential);
+}
+
+async fn AuthN() -> String {
+    match GetCred() {
+        Authorization::None => return String::new(),
+        Authorization::Apikey(k) => return k,
+        Authorization::Credential(cred) => {
+            let client = BasicClient::new(
+                ClientId::new("infer_client".to_string()),
+                Some(ClientSecret::new(cred.secret)),
+                AuthUrl::new(
+                    "http://192.168.0.22:1260/realms/inferx/protocol/openid-connect/auth"
+                        .to_string(),
+                )
+                .unwrap(),
+                Some(
+                    TokenUrl::new(
+                        "http://192.168.0.22:1260/realms/inferx/protocol/openid-connect/token"
+                            .to_string(),
+                    )
+                    .unwrap(),
+                ),
+            );
+
+            let token_result = client
+                .exchange_password(
+                    &ResourceOwnerUsername::new(cred.username),
+                    &ResourceOwnerPassword::new(cred.password),
+                )
+                .request_async(async_http_client)
+                .await
+                .expect("Failed to obtain access token");
+
+            println!("Access Token: {:?}", token_result.access_token().secret());
+            return token_result.access_token().secret().clone();
+        }
+    }
 }

@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "openbmb/MiniCPM-2B-sft-bf16",
-                "--enforce-eager",
                 "--trust-remote-code",
                 "--max-model-len",
                 "1200"
@@ -42,7 +41,7 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "山东省最高的山是哪座山, 它比黄山高还是矮？差距多少？",
+                "prompt": "Give me a short introduction to large language model.",
                 "path": "v1/completions",
                 "body": {
                     "model": "openbmb/MiniCPM-2B-sft-bf16",

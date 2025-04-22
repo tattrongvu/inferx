@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--max-model-len",
                 "2000"
@@ -20,7 +19,7 @@
                 "GPU": {
                     "Type": "Any",
                     "Count": 1,
-                    "vRam": 5000
+                    "vRam": 4500
                 }
             },
             "envs": [
@@ -53,7 +52,7 @@
             },
             "standby": {
                 "gpu": "File",
-                "pageable": "Mem",
+                "pageable": "File",
                 "pinned": "File"
             }
         }

@@ -18,11 +18,13 @@ import time
 
 import requests
 import markdown
+import functools
 
 from flask import (
     Blueprint,
     Flask,
     jsonify,
+    redirect, url_for, session, 
     render_template,
     render_template_string,
     request,
@@ -30,15 +32,203 @@ from flask import (
     send_from_directory
 )
 
+from authlib.integrations.flask_client import OAuth
+from authlib.common.security import generate_token 
+
 from threading import Thread
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
+KEYCLOAK_URL = "http://192.168.0.22:1260"
+REALM_NAME = "inferx"
+CLIENT_ID = "infer_client"
+CLIENT_SECRET = "SJvfmGFViBNHsLfhkto4eRE0PnPhpyft"
+REDIRECT_URI = "http://localhost:1250/auth/callback"
 
-tls = True
+server_metadata_url = "{}//realms/inferx/.well-known/openid-configuration".format(KEYCLOAK_URL)
+
+oauth = OAuth(app)
+
+keycloak = oauth.register(
+    name='keycloak',
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    server_metadata_url=server_metadata_url,
+    client_kwargs={
+        'scope': 'openid email profile',
+        'code_challenge_method': 'S256'  # Enable PKCE
+    }
+)
+
+tls = False
 
 apihostaddr = "http://localhost:4000"
 # apihostaddr = "https://quarksoft.io:4000"
+
+def is_token_expired():
+    # Check if token exists and has expiration time
+    if 'token' not in session:
+        return True
+    
+    token = session['token']
+    return token.get('expires_at', 0) < time.time()
+
+def refresh_token_if_needed():
+    if 'token' not in session:
+        return False
+    
+    token = session['token']
+    if is_token_expired():
+        try:
+            new_token = keycloak.fetch_access_token(
+                refresh_token=token['refresh_token'],
+                grant_type='refresh_token'
+            )
+            session['token'] = new_token
+            session['access_token'] = new_token['access_token']
+            return True
+        except Exception as e:
+            # Handle refresh error (e.g., invalid refresh token)
+            print(f"Token refresh failed: {e}")
+            session.pop('token', None)
+            return False
+    return True
+
+def not_require_login(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        access_token = session.get('access_token', '')
+        if access_token == "":
+            return func(*args, **kwargs)
+
+        current_path = request.url
+        redirect_uri = url_for('login', redirectpath=current_path, _external=True)
+        if 'token' not in session:
+            return redirect(redirect_uri)
+        if is_token_expired() and not refresh_token_if_needed():
+            return redirect(redirect_uri)
+
+        return func(*args, **kwargs)
+    return wrapper
+
+def require_login(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        current_path = request.url
+        redirect_uri = url_for('login', redirectpath=current_path, _external=True)
+        if 'token' not in session:
+            return redirect(redirect_uri)
+        if is_token_expired() and not refresh_token_if_needed():
+            return redirect(redirect_uri)
+
+        return func(*args, **kwargs)
+    return wrapper
+
+@app.route('/login')
+def login():
+    nonce = generate_token(20)
+    session['keycloak_nonce'] = nonce
+    redirectpath=request.args.get('redirectpath', '')
+    redirect_uri = url_for('auth_callback', redirectpath=redirectpath,  _external=True)
+    return keycloak.authorize_redirect(
+        redirect_uri=redirect_uri,
+        nonce=nonce  # Pass nonce to Keycloak
+    )
+
+@app.route('/auth/callback')
+def auth_callback():
+    try:
+        # Retrieve token and validate nonce
+        token = keycloak.authorize_access_token()
+        nonce = session.pop('keycloak_nonce', None)
+
+        redirectpath=request.args.get('redirectpath', '')
+    
+        if not nonce:
+            raise Exception("Missing nonce in session")
+
+        userinfo = keycloak.parse_id_token(token, nonce=nonce)  # Validate nonce
+        session['user'] = userinfo
+        session['username'] = userinfo.get('preferred_username')
+        session['access_token'] = token.get('access_token')
+        session['token'] = token
+        session['id_token'] = token.get('id_token')
+
+        if redirectpath=='':
+            return redirect(url_for('ListFunc'))
+        return redirect(redirectpath)
+    except Exception as e:
+        return f"Authentication failed: {str(e)}", 403
+
+@app.route('/logout')
+def logout():
+    # Keycloak logout endpoint
+    end_session_endpoint = (
+        f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/logout"
+    )
+    
+    id_token = session.get('id_token', '')
+    # return redirect(end_session_endpoint)
+
+    session.clear()
+    # # Redirect to Keycloak to clear SSO session
+    return redirect(
+        f"{end_session_endpoint}?"
+        f"post_logout_redirect_uri={url_for('ListFunc', _external=True)}&"
+        f"id_token_hint={id_token}"
+    )
+
+def getapkkeys():
+    access_token = session.get('token')['access_token']
+    # Include the access token in the Authorization header
+    headers = {'Authorization': f'Bearer {access_token}'}
+    
+    url = "{}/apikey/".format(apihostaddr)
+    resp = requests.get(url, headers=headers)
+    apikeys = json.loads(resp.content)
+
+    return apikeys
+
+@app.route('/apikeys')
+@require_login
+def apikeys():
+    apikeys = getapkkeys()
+    return render_template(
+        "apikey.html", apikeys=apikeys
+    )
+
+@app.route('/generate_apikeys', methods=['GET'])
+@require_login
+def generate_apikeys():
+    apikeys = getapkkeys()
+    return apikeys
+
+@app.route('/apikeys', methods=['PUT'])
+@require_login
+def create_apikey():
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
+    req = request.get_json()
+    url = "{}/apikey/".format(apihostaddr)
+    resp = requests.put(url, headers=headers, json=req)
+    return resp
+
+@app.route('/apikeys', methods=['DELETE'])
+@require_login
+def delete_apikey():
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
+    req = request.get_json()
+    url = "{}/apikey/".format(apihostaddr)
+    resp = requests.delete(url, headers=headers, json=req)
+    return resp
 
 def read_markdown_file(filename):
     """Read and convert Markdown file to HTML"""
@@ -60,23 +250,38 @@ def ReadFuncLog(namespace: str, funcId: str) -> str:
 
 
 def listfuncs(tenant: str, namespace: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/functions/{}/{}/".format(apihostaddr, tenant, namespace)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     funcs = json.loads(resp.content)  
 
     return funcs
 
 
 def getfunc(tenant: str, namespace: str, funcname: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/function/{}/{}/{}/".format(apihostaddr, tenant, namespace, funcname)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     func = json.loads(resp.content)
     return func
 
 
 def listsnapshots(tenant: str, namespace: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/snapshots/{}/{}/".format(apihostaddr, tenant, namespace)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     func = json.loads(resp.content)
     return func
 
@@ -98,56 +303,86 @@ def getnode(name: str):
 
 
 def listpods(tenant: str, namespace: str, funcname: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/pods/{}/{}/{}/".format(apihostaddr, tenant, namespace, funcname)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     pods = json.loads(resp.content)
 
     return pods
 
 
 def getpod(tenant: str, namespace: str, podname: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/pod/{}/".format(apihostaddr, podname)
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     pod = json.loads(resp.content)
 
     return pod
 
 
 def getpodaudit(tenant: str, namespace: str, fpname: str, fprevision: int, id: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/podauditlog/{}/{}/{}/{}/{}/".format(
         apihostaddr, tenant, namespace, fpname, fprevision, id
     )
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     logs = json.loads(resp.content)
 
     return logs
 
 
 def GetFailLogs(tenant: str, namespace: str, funcname: str, revision: int):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/faillogs/{}/{}/{}/{}".format(
         apihostaddr, tenant, namespace, funcname, revision
     )
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     print("GetFailLogs  ", resp.content)
     fails = json.loads(resp.content)
     return fails
 
 
 def GetFailLog(tenant: str, namespace: str, funcname: str, revision: int, id: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/faillog/{}/{}/{}/{}/{}".format(
         apihostaddr, tenant, namespace, funcname, revision, id
     )
     resp = requests.get(url)
-    fail = json.loads(resp.content)
+    fail = json.loads(resp.content, headers=headers)
     fail["log"] = fail["log"].replace("\n", "<br>")
     return fail["log"]
 
 
 def readpodlog(tenant: str, namespace: str, funcname: str, version: int, id: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     url = "{}/podlog/{}/{}/{}/{}/{}/".format(
         apihostaddr, tenant, namespace, funcname, version, id
     )
-    resp = requests.get(url)
+    resp = requests.get(url, headers=headers)
     log = resp.content.decode()
     log = log.replace("\n", "<br>")
     log = log.replace("    ", "&emsp;")
@@ -155,13 +390,29 @@ def readpodlog(tenant: str, namespace: str, funcname: str, version: int, id: str
 
 
 def getrest(tenant: str, namespace: str, name: str):
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {}
+    else:
+        headers = {'Authorization': f'Bearer {access_token}'}
     req = "{}/sampleccall/{}/{}/{}/".format(apihostaddr, tenant, namespace, name)
-    resp = requests.get(req, stream=False).text
+    resp = requests.get(req, stream=False, headers=headers).text
     return resp
 
 
 @app.route('/text2img', methods=['POST'])
+@not_require_login
 def text2img():
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {
+            "Content-Type": "application/json",
+        }
+    else:
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            "Content-Type": "application/json",
+        }
     req = request.get_json()
     
     print("text2img req ", req)
@@ -183,10 +434,6 @@ def text2img():
         postreq[key] = value
 
     url = "{}/funccall/{}/{}/{}/{}".format(apihostaddr, tenant, namespace, funcname, sample["path"] )
-    
-    headers = {
-        "Content-Type": "application/json",
-    }
 
     # Stream the response from OpenAI API
     resp = requests.post(url, headers=headers, json=postreq, stream=True)
@@ -198,7 +445,18 @@ def text2img():
 
 
 @app.route('/generate', methods=['POST'])
+@not_require_login
 def generate():
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {
+            "Content-Type": "application/json",
+        }
+    else:
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            "Content-Type": "application/json",
+        }
     # Parse input JSON from the request
     req = request.get_json()
     
@@ -225,10 +483,6 @@ def generate():
         postreq[key] = value
 
     url = "{}/funccall/{}/{}/{}/{}".format(apihostaddr, tenant, namespace, funcname, sample["path"] )
-    
-    headers = {
-        "Content-Type": "application/json",
-    }
 
     # Stream the response from OpenAI API
     response = requests.post(url, headers=headers, json=postreq, stream=True)
@@ -276,6 +530,46 @@ def generate():
     return Response(stream_openai(), headers = responseheaders, content_type='text/plain')
 
 
+
+def stream_response(response):
+    try:
+        for chunk in response.iter_content(chunk_size=128):
+            yield chunk
+    finally:
+        response.close()
+
+@app.route('/proxy/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
+@not_require_login
+def proxy(path):
+    access_token = session.get('access_token', '')
+    headers = {key: value for key, value in request.headers if key.lower() != 'host'}
+    if access_token != "":
+        headers["Authorization"] = f'Bearer {access_token}'
+    
+    # Construct the full URL for the backend request
+    url = f"{apihostaddr}/{path}"
+
+    try:
+        resp = requests.request(
+            method=request.method,
+            url=url,
+            headers=headers,
+            data=request.get_data(),
+            cookies=request.cookies,
+            allow_redirects=False,
+            stream=True
+        )
+    except requests.exceptions.RequestException as e:
+        return Response(f"Error connecting to backend server: {e}", status=502)
+    
+    # Exclude hop-by-hop headers as per RFC 2616 section 13.5.1
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(name, value) for name, value in resp.raw.headers.items() if name.lower() not in excluded_headers]
+    
+    # Create a Flask response object with the backend server's response
+    response = Response(stream_response(resp), resp.status_code, headers)
+    return response
+
 @app.route("/intro")
 def md():
     name = request.args.get("name")
@@ -300,8 +594,10 @@ def funclog():
         "log.html", namespace=namespace, funcId=funcId, funcName=funcName, log=output
     )
 
+
 @app.route("/")
 @app.route("/listfunc")
+@not_require_login
 def ListFunc():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -338,6 +634,7 @@ def ListFunc():
 
 
 @app.route("/listsnapshot")
+@not_require_login
 def ListSnapshot():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -354,6 +651,7 @@ def ListSnapshot():
 
 
 @app.route("/func", methods=("GET", "POST"))
+@not_require_login
 def GetFunc():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -362,6 +660,7 @@ def GetFunc():
     func = getfunc(tenant, namespace, name)
     
     sample = func["func"]["object"]["spec"]["sample_query"]
+    map = sample["body"]
     apiType = sample["apiType"]
 
     version = func["func"]["object"]["spec"]["version"]
@@ -380,12 +679,15 @@ def GetFunc():
         func=func,
         fails=fails,
         funcspec=funcspec,
-        apiType=apiType
+        apiType=apiType,
+        map=map,
+        path=sample["path"]
     )
 
 
 # @app.route("/")
 @app.route("/listnode")
+@not_require_login
 def ListNode():
     nodes = listnodes()
 
@@ -400,6 +702,7 @@ def ListNode():
 
 
 @app.route("/node")
+@not_require_login
 def GetNode():
     name = request.args.get("name")
     node = getnode(name)
@@ -412,6 +715,7 @@ def GetNode():
 
 
 @app.route("/listpod")
+@not_require_login
 def ListPod():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -428,6 +732,7 @@ def ListPod():
 
 
 @app.route("/pod")
+@not_require_login
 def GetPod():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -451,6 +756,7 @@ def GetPod():
 
 
 @app.route("/failpod")
+@not_require_login
 def GetFailPod():
     tenant = request.args.get("tenant")
     namespace = request.args.get("namespace")
@@ -471,13 +777,14 @@ def GetFailPod():
     )
 
 def run_http():
-    app.run(host='0.0.0.0', port=1250, debug=False)
+    app.run(host='0.0.0.0', port=1250, debug=True)
 
 
 if __name__ == "__main__":
-    http_thread = Thread(target=run_http)
-    http_thread.start()
-
     if tls:
+        http_thread = Thread(target=run_http)
+        http_thread.start()
         app.run(host="0.0.0.0", port=1239, ssl_context=('/etc/letsencrypt/live/inferx.net/fullchain.pem', '/etc/letsencrypt/live/inferx.net/privkey.pem'))
         # app.run(host="0.0.0.0", port=1239, ssl_context=('/etc/letsencrypt/live/quarksoft.io/fullchain.pem', '/etc/letsencrypt/live/quarksoft.io/privkey.pem'))
+    else:
+        app.run(host='0.0.0.0', port=1250, debug=True)

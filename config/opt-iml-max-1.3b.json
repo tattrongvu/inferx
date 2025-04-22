@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "facebook/opt-iml-max-1.3b",
-                "--enforce-eager",
                 "--max-model-len",
                 "200"
             ],

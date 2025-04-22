@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "allenai/OLMo-1B-hf",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--max-model-len",
                 "2000"
@@ -20,7 +19,7 @@
                 "GPU": {
                     "Type": "Any",
                     "Count": 1,
-                    "vRam": 13800
+                    "vRam": 14600
                 }
             },
             "envs": [

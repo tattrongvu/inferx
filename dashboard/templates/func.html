@@ -59,16 +59,18 @@
     <img id="processing" style="display:none;" src="{{ url_for('static', filename='button.gif') }}" />
     <div id="go"> Go </div>
 </button>
-
+<button id="cancel" onclick="cancel()" disabled>Cancel</button>
 
 <h2>
     <div id="startDiv"></div>
     <div id="ttftDiv"></div>
+    <div id="tpsDiv"></div>
 </h2>
 
 <img id="myImage" style="display:none;" alt="API Image" />
 <br>
 <textarea id="output" rows="20" cols="120"></textarea>
+<textarea id="debug" rows="20" cols="120" hidden></textarea>
 
 <h1>Sample Rest Call</h1>
 <textarea id="restcall" rows="8" cols="120">
@@ -106,8 +108,146 @@
     const namespace = {{ namespace | tojson }};
     const name = {{ name | tojson }};
     const apiType = {{ apiType | tojson }};
+    const map = {{ map | tojson }};
+    const path = {{ path | tojson }};
+
+    async function cancel() {
+        if (abortController) {
+            abortController.abort();
+        }
+    }
 
     async function streamOutput() {
+        if (apiType == "text2img" || apiType == "standard") {
+            await streamOutputImage();
+        } else {
+            await streamOutputText();
+        }
+    }
+
+    async function streamOutputText() {
+        const button = document.getElementById('button');
+        const cancelBtn = document.getElementById('cancel');
+        const outputDiv = document.getElementById('output');
+        const debugDiv = document.getElementById('debug');
+        const tpsDiv = document.getElementById('tpsDiv');
+        const prompt = document.getElementById('prompt').value;
+        const image = document.getElementById('image').value;
+
+        cancelBtn.addEventListener('click', () => {
+            if (abortController) {
+                abortController.abort();
+            }
+        });
+
+        cancelBtn.disabled = false;
+        const llvm = true;
+        outputDiv.innerHTML = ""
+        try {
+            const processImage = document.getElementById('processing');
+            const buttonTxt = document.getElementById('go');
+            button.disabled = true;
+
+            processImage.style = "width:15px;height:15px;";
+            buttonTxt.style = "display:none;";
+
+            const hostname = window.location.hostname;
+            const port = window.location.port;
+            const schema = window.location.protocol;
+
+            abortController = new AbortController();
+            const { signal } = abortController;
+
+            url = schema + "//" + hostname + ":" + port + "/proxy/funccall/" + tenant + "/" + namespace + "/" + name + "/" + path;
+            map["prompt"] = prompt;
+            const body = {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(map),
+                signal
+            };
+
+            const response = await fetch(url, body);
+            processImage.style = "display:none;"
+            buttonTxt.style = "";
+
+            const restore = response.headers.get("tcpconn_latency_header");
+            const ttft = response.headers.get("ttft_latency_header");
+            const contentType = response.headers.get("content-type");
+            debugDiv.innerHTML = apiType;
+
+            const startDiv = document.getElementById('startDiv');
+            const ttftDiv = document.getElementById('ttftDiv');
+            startDiv.innerHTML = "Start Latency: " + restore + ' ms ' + '<br>';
+            ttftDiv.innerHTML = "Time To First Token: " + ttft + ' ms ' + '<br>';
+
+            if (response.ok == false) {
+                outputDiv.innerHTML = response.content;
+                button.disabled = false;
+                return
+            }
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let done = false;
+            let tokenCount = 0;
+            const startTime = Date.now();
+
+            while (!done) {
+                const { value, done: doneReading } = await reader.read();
+                done = doneReading;
+                const chunkValue = decoder.decode(value, { stream: true });
+                const lines = chunkValue.split('\n').filter(line => line.trim() !== '');
+                // debugDiv.innerHTML += "lines:" + lines + "\n\n";;
+
+                let left = "";
+                for (const line of lines) {
+                    if (line.trim() === 'data: [DONE]') {
+                        done = true;
+                        break;
+                    }
+
+                    if (true) {
+                        left += line;
+                        const jsonStr = left.replace(/^data: /, '');
+                        left = ""
+                        // debugDiv.innerHTML += jsonStr + "\n\n";
+                        try {
+                            const parsed = JSON.parse(jsonStr);
+                            const content = parsed.choices?.[0]?.text;
+                            // debugDiv.innerHTML += "parse:" + JSON.stringify(content) + "\n\n";
+                            if (content) {
+                                outputDiv.innerHTML += content;
+                                tokenCount += 1;
+                                const elapsed = (Date.now() - startTime) / 1000;
+                                tpsDiv.innerHTML = "TPS: " + (tokenCount / elapsed).toFixed(0) + "     Tokens: " + tokenCount;
+                                // tpsDisplay.textContent = (tokenCount / elapsed).toFixed(2);
+                            }
+                        } catch (err) {
+                            // some line is splitted by "\n"
+                            left = jsonStr
+                            debugDiv.innerHTML += jsonStr + "\n\n";
+                            debugDiv.innerHTML += 'Error parsing JSON:' + err + "\n\n";
+                        }
+                    }
+                }
+            }
+
+        } catch (error) {
+            // outputDiv.innerHTML += error + '<br>';
+            // outputDiv.innerHTML += error.cause + '<br>';
+            // console.error('Error fetching HTML:', error);
+            button.disabled = false;
+            cancelBtn.disabled = true;
+        }
+
+        button.disabled = false;
+        cancelBtn.disabled = true;
+    }
+
+    async function streamOutputImage() {
         const button = document.getElementById('button');
         const outputDiv = document.getElementById('output');
         const prompt = document.getElementById('prompt').value;

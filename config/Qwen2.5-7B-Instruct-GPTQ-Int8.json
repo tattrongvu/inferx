@@ -9,9 +9,8 @@
             "commands": [
                 "--model",
                 "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int8",
-                "--enforce-eager",
                 "--gpu-memory-utilization",
-                "0.99",
+                "0.80",
                 "--max-model-len",
                 "1000"
             ],
@@ -21,7 +20,7 @@
                 "GPU": {
                     "Type": "Any",
                     "Count": 1,
-                    "vRam": 13500
+                    "vRam": 14200
                 }
             },
             "envs": [

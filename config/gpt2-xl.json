@@ -10,7 +10,6 @@
                 "--model",
                 "openai-community/gpt2-xl",
                 "--disable-custom-all-reduce",
-                "--enforce-eager",
                 "--max-model-len",
                 "800"
             ],

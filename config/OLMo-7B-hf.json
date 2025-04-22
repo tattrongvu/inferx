@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "allenai/OLMo-7B-hf",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--max-model-len",
                 "2000",

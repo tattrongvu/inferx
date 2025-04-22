@@ -11,6 +11,20 @@ services:
       - /lib/modules/:/lib/modules/
       - /opt/inferx/:/opt/inferx/
       - /run/udev:/run/udev
+  secret_db:
+    image: postgres:14.5
+    restart: unless-stopped
+    container_name: secret_db
+    environment:
+      - POSTGRES_USER=secret
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=secretdb
+      - PGDATA=/data/postgres
+    ports:
+      - '5431:5432'
+    volumes:
+      - /opt/inferx/config/secret.sql:/docker-entrypoint-initdb.d/db.sql
+      - /opt/inferx/data/postgres_secret:/data/postgres
   db:
     image: postgres:14.5
     restart: unless-stopped
@@ -43,57 +57,95 @@ services:
     ports:
       - '2379:2379'
       - '2380:2380'
-  ffly:
-    image: inferx/inferx_one:v0.1.0
-    restart: on-failure
-    container_name: inferx_one
-    privileged: true
-    user: root
-    cpus: 10
-    network_mode: "host"
-    pid: "host"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:4000" ]
-      interval: 10s
-      timeout: 10s
-      retries: 3
-    depends_on:
-      db:
-        condition: service_started
-      etcd:
-        condition: service_started
-      spdk:
-        condition: service_completed_successfully
+  # inferx:
+  #   image: inferx/inferx_one:v0.1.0
+  #   restart: on-failure
+  #   container_name: inferx_one
+  #   privileged: true
+  #   user: root
+  #   cpus: 10
+  #   network_mode: "host"
+  #   pid: "host"
+  #   healthcheck:
+  #     test: [ "CMD", "curl", "-f", "http://localhost:4000" ]
+  #     interval: 10s
+  #     timeout: 10s
+  #     retries: 3
+  #   depends_on:
+  #     db:
+  #       condition: service_started
+  #     etcd:
+  #       condition: service_started
+  #     spdk:
+  #       condition: service_completed_successfully
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /run/udev:/run/udev
+  #     - /dev/hugepages:/dev/hugepages
+  #     - /opt/inferx/:/opt/inferx/
+  #     - /etc/letsencrypt/:/etc/letsencrypt/
+  #     - /var/run/docker/runtime-runc/moby/:/var/run/docker/runtime-runc/moby/
+  #     - /var/lib/docker/:/var/lib/docker/
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all # alternatively, use `count: all` for all GPUs
+  #             capabilities: [ gpu ]
+  #   command:
+  #     - ./onenode
+  #     - /opt/inferx/config/node3.json
+  # dashboard:
+  #   image: inferx/inferx_dashboard:v0.1.0
+  #   restart: on-failure
+  #   container_name: inferx_dashboard
+  #   network_mode: "host"
+  #   healthcheck:
+  #     test: [ "CMD", "curl", "-f", "http://inferx.net:1250/listnode" ]
+  #     interval: 10s
+  #     timeout: 10s
+  #     retries: 3
+  #   depends_on:
+  #     - db
+  #     - etcd
+  #   volumes:
+  #     - /etc/letsencrypt/:/etc/letsencrypt/
+  keycloak-postgres:
+    image: postgres:14.5
+    restart: unless-stopped
+    container_name: keycloak_db
+    environment:
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=keycloak
+      - PGDATA=/data/postgres
+    networks:
+      - keycloak-network
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /run/udev:/run/udev
-      - /dev/hugepages:/dev/hugepages
-      - /opt/inferx/:/opt/inferx/
-      - /etc/letsencrypt/:/etc/letsencrypt/
-      - /var/run/docker/runtime-runc/moby/:/var/run/docker/runtime-runc/moby/
-      - /var/lib/docker/:/var/lib/docker/
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all # alternatively, use `count: all` for all GPUs
-              capabilities: [ gpu ]
+      - /opt/inferx/data/postgres_keycloak:/data/postgres
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    restart: on-failure
+    container_name: keycloak
+    # network_mode: "host"
+    networks:
+      - keycloak-network
+    ports:
+      - '1260:8080'
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-postgres:5432/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=123456
+    depends_on:
+      keycloak-postgres:
+        condition: service_started
     command:
-      - ./onenode
-      - /opt/inferx/config/node.json
-  dashboard:
-    image: inferx/inferx_dashboard:v0.1.0
-    restart: on-failure
-    container_name: inferx_dashboard
-    network_mode: "host"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://inferx.net:1250/listnode" ]
-      interval: 10s
-      timeout: 10s
-      retries: 3
-    depends_on:
-      - db
-      - etcd
-    volumes:
-      - /etc/letsencrypt/:/etc/letsencrypt/
+      - start-dev
+      - --verbose
+networks:
+  keycloak-network:
+    driver: bridge

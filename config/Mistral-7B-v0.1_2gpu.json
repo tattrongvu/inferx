@@ -9,12 +9,11 @@
             "commands": [
                 "--model",
                 "mistralai/Mistral-7B-v0.1",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--gpu-memory-utilization",
-                "0.99",
+                "0.80",
                 "--max-model-len",
-                "2000",
+                "1200",
                 "--tensor-parallel-size=2"
             ],
             "resources": {
@@ -23,7 +22,7 @@
                 "GPU": {
                     "Type": "Any",
                     "Count": 2,
-                    "vRam": 13800
+                    "vRam": 14200
                 }
             },
             "envs": [

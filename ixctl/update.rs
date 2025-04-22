@@ -66,7 +66,7 @@ impl UpdateCmd {
             Ok(c) => c,
         };
 
-        let version = client.Update(o.clone()).await?;
+        let version = client.Update(&gConfig.accessToken, o.clone()).await?;
 
         let obj = o.CopyWithRev(version, version);
 

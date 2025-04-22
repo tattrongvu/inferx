@@ -9,7 +9,6 @@
             "commands": [
                 "--model",
                 "baichuan-inc/Baichuan-7B",
-                "--enforce-eager",
                 "--disable-custom-all-reduce",
                 "--trust-remote-code",
                 "--max-model-len",
@@ -44,7 +43,7 @@
             },
             "sample_query": {
                 "apiType": "openai",
-                "prompt": "登鹳雀楼->王之涣\n夜雨寄北->",
+                "prompt": "Give me a short introduction to large language model.",
                 "path": "v1/completions",
                 "body": {
                     "model": "baichuan-inc/Baichuan-7B",

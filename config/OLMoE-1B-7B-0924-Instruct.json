@@ -8,7 +8,6 @@
         "commands": [
             "--model",
             "allenai/OLMoE-1B-7B-0924-Instruct",
-            "--enforce-eager",
             "--disable-custom-all-reduce",
             "--trust-remote-code",
             "--max-model-len",

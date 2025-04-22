@@ -24,7 +24,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -260,6 +259,32 @@ impl<SpecType: Serialize + for<'a> Deserialize<'a> + Clone + core::fmt::Debug + 
     pub fn Contains(&self, tenant: &str, namespace: &str, name: &str) -> bool {
         let key = format!("{}/{}/{}", tenant, namespace, name);
         return self.lock().unwrap().objs.contains_key(&key);
+    }
+
+    pub fn IsEmpty(&self, tenant: &str, namespace: &str) -> bool {
+        let start = if tenant.len() > 0 {
+            if namespace.len() > 0 {
+                format!("{}/{}/", tenant, namespace)
+            } else {
+                format!("{}/", tenant)
+            }
+        } else {
+            "".to_owned()
+        };
+        for (key, _) in self
+            .lock()
+            .unwrap()
+            .objs
+            .range::<String, _>((Included(start.clone()), Unbounded))
+        {
+            if key.starts_with(&start) {
+                return false;
+            } else {
+                break;
+            }
+        }
+
+        return true;
     }
 
     pub fn GetObjectKeys(&self, tenant: &str, namespace: &str) -> Result<Vec<String>> {
