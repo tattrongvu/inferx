@@ -443,6 +443,94 @@ def text2img():
     headers = [(name, value) for (name, value) in resp.raw.headers.items() if name.lower() not in excluded_headers]
     return Response(resp.iter_content(1024000), resp.status_code, headers)
 
+
+@app.route('/generate', methods=['POST'])
+@not_require_login
+def generate():
+    access_token = session.get('access_token', '')
+    if access_token == "":
+        headers = {
+            "Content-Type": "application/json",
+        }
+    else:
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            "Content-Type": "application/json",
+        }
+    # Parse input JSON from the request
+    req = request.get_json()
+    
+    prompt = req["prompt"]
+    tenant = req.get("tenant")
+    namespace = req.get("namespace")
+    funcname = req.get("funcname")
+    
+    func = getfunc(tenant, namespace, funcname)
+
+    sample = func["func"]["object"]["spec"]["sample_query"]
+    map = sample["body"]
+
+    postreq = {
+        "prompt": prompt
+    }
+
+    isOpenAi = sample["apiType"] == "openai"
+
+    if sample["apiType"] == "llava":
+        postreq["image"] = req.get("image")
+
+    for index, (key, value) in enumerate(map.items()):
+        postreq[key] = value
+
+    url = "{}/funccall/{}/{}/{}/{}".format(apihostaddr, tenant, namespace, funcname, sample["path"] )
+
+    # Stream the response from OpenAI API
+    response = requests.post(url, headers=headers, json=postreq, stream=True)
+    headers = response.headers
+    def stream_openai():
+        try:
+            if response.status_code == 200:
+                if isOpenAi:
+                    # Iterate over streamed chunks and yield them
+                    for data in response.iter_lines():
+                        if data:
+                            s = data.decode("utf-8")
+                            lines = s.split("data:")
+                            for line in lines:  
+                                if "[DONE]" in line:
+                                    continue
+                                if len(line) != 0:
+                                    # Parse the line as JSON
+                                    parsed_line = json.loads(line)
+                                    # Extract and print the content delta
+                                    if "choices" in parsed_line:
+                                        delta = parsed_line["choices"][0]["text"]
+                                        yield delta
+                                    else:
+                                        yield line
+                else:
+                    for chunk in response.iter_content(chunk_size=1):
+                        if chunk:
+                            yield(chunk)
+            else:
+                for chunk in response.iter_content(chunk_size=1):
+                    if chunk:
+                        yield(chunk)
+
+
+        except Exception as e:
+            yield f"Error: {str(e)}"
+
+    responseheaders = {
+        "tcpconn_latency_header": headers["tcpconn_latency_header"],
+        "ttft_latency_header": headers["ttft_latency_header"]
+    }
+
+    # Return a streaming response
+    return Response(stream_openai(), headers = responseheaders, content_type='text/plain')
+
+
+
 def stream_response(response):
     try:
         for chunk in response.iter_content(chunk_size=128):

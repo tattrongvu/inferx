@@ -118,7 +118,7 @@
     }
 
     async function streamOutput() {
-        if (apiType == "text2img") {
+        if (apiType == "text2img" || apiType == "standard") {
             await streamOutputImage();
         } else {
             await streamOutputText();
@@ -177,7 +177,7 @@
             const restore = response.headers.get("tcpconn_latency_header");
             const ttft = response.headers.get("ttft_latency_header");
             const contentType = response.headers.get("content-type");
-            debugDiv.innerHTML = "";
+            debugDiv.innerHTML = apiType;
 
             const startDiv = document.getElementById('startDiv');
             const ttftDiv = document.getElementById('ttftDiv');
