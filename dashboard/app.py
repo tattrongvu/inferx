@@ -61,7 +61,7 @@ keycloak = oauth.register(
     }
 )
 
-tls = False
+tls = True
 
 apihostaddr = "http://localhost:4000"
 # apihostaddr = "https://quarksoft.io:4000"
