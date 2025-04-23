@@ -56,3 +56,9 @@ stop:
 	
 stopblob:
 	sudo docker compose -f docker-compose_blob.yml down
+
+rundash:
+	sudo docker run --net=host --name inferx_dashboard -v /etc/letsencrypt/:/etc/letsencrypt/ --rm  inferx/inferx_dashboard:v0.1.0
+
+stopdash:
+	sudo docker stop inferx_dashboard

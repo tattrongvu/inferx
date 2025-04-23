@@ -44,7 +44,6 @@ KEYCLOAK_URL = "http://192.168.0.22:1260"
 REALM_NAME = "inferx"
 CLIENT_ID = "infer_client"
 CLIENT_SECRET = "SJvfmGFViBNHsLfhkto4eRE0PnPhpyft"
-REDIRECT_URI = "http://localhost:1250/auth/callback"
 
 server_metadata_url = "{}//realms/inferx/.well-known/openid-configuration".format(KEYCLOAK_URL)
 
