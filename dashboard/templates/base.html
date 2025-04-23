@@ -44,22 +44,25 @@
         <a href="{{ hosturl }}listpod"> Pods </a>
         <a href="{{ hosturl }}listsnapshot"> Snapshots </a>
         <a href="{{ hosturl }}listnode"> Nodes </a>
-        <a href="{{ hosturl }}apikeys"> Apikeys </a>
-        <a href="{{ hosturl }}clear"> Clear </a>
-
+        <a href="{{ hosturl }}apikeys" id="apikey"> Apikeys </a>
     </nav>
     <script>
-        const usernam = "{{ session['username'] }}";
         const link = document.querySelector('#login_logout');
-        if (usernam == "") {
-            const currentUrl = window.location.href;
-            link.href = '{{ hosturl }}' + "login";
-            link.textContent = 'login'
+        const apikey = document.querySelector('#apikey');
+        if (location.protocol == 'https:') {
+            apikey.style.display = 'none';
+            link.style.display = 'none';
         } else {
-            link.href = '{{ hosturl }}' + "logout";
-            link.textContent = "logout(" + usernam + ")";
+            const usernam = "{{ session['username'] }}";
+            if (usernam == "") {
+                const currentUrl = window.location.href;
+                link.href = '{{ hosturl }}' + "login";
+                link.textContent = 'login'
+            } else {
+                link.href = '{{ hosturl }}' + "logout";
+                link.textContent = "logout(" + usernam + ")";
+            }
         }
-
 
     </script>
     <hr>
