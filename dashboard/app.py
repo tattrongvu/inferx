@@ -60,7 +60,7 @@ keycloak = oauth.register(
     }
 )
 
-tls = True
+tls = False
 
 apihostaddr = "http://localhost:4000"
 # apihostaddr = "https://quarksoft.io:4000"
@@ -133,6 +133,14 @@ def login():
     return keycloak.authorize_redirect(
         redirect_uri=redirect_uri,
         nonce=nonce  # Pass nonce to Keycloak
+    )
+
+@app.route('/clear')
+def clean():
+    session.clear();
+    current_path = request.url
+    return keycloak.authorize_redirect(
+        redirect_uri=current_path
     )
 
 @app.route('/auth/callback')

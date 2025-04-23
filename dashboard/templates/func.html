@@ -158,7 +158,7 @@
             abortController = new AbortController();
             const { signal } = abortController;
 
-            url = schema + "//" + hostname + ":" + port + "/funccall/" + tenant + "/" + namespace + "/" + name + "/" + path;
+            url = schema + "//" + hostname + ":" + port + "/proxy/funccall/" + tenant + "/" + namespace + "/" + name + "/" + path;
             map["prompt"] = prompt;
             const body = {
                 method: 'POST',
