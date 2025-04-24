@@ -51,7 +51,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 
-KEYCLOAK_URL = os.getenv('KEYCLOAK_URL', "http://192.168.0.22:1260")
+KEYCLOAK_URL = os.getenv('KEYCLOAK_URL', "http://192.168.0.22:81/authn")
 KEYCLOAK_REALM_NAME = os.getenv('KEYCLOAK_REALM_NAME', "inferx")
 KEYCLOAK_CLIENT_ID = os.getenv('KEYCLOAK_CLIENT_ID', "infer_client")
 KEYCLOAK_CLIENT_SECRET = os.getenv('KEYCLOAK_CLIENT_SECRET', "SJvfmGFViBNHsLfhkto4eRE0PnPhpyft")
