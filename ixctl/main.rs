@@ -105,6 +105,12 @@ fn GetCred() -> Authorization {
 }
 
 async fn AuthN() -> String {
+    let keycloakUrl = match std::env::var("KEYCLOAK_URL") {
+        Ok(s) => s,
+        Err(_) => "http://localhost:1260/authn".to_owned(),
+    };
+
+    println!("keycloakUrl is {}", &keycloakUrl);
     match GetCred() {
         Authorization::None => return String::new(),
         Authorization::Apikey(k) => return k,
@@ -112,16 +118,16 @@ async fn AuthN() -> String {
             let client = BasicClient::new(
                 ClientId::new("infer_client".to_string()),
                 Some(ClientSecret::new(cred.secret)),
-                AuthUrl::new(
-                    "http://192.168.0.22:1260/realms/inferx/protocol/openid-connect/auth"
-                        .to_string(),
-                )
+                AuthUrl::new(format!(
+                    "{}/realms/inferx/protocol/openid-connect/auth",
+                    &keycloakUrl
+                ))
                 .unwrap(),
                 Some(
-                    TokenUrl::new(
-                        "http://192.168.0.22:1260/realms/inferx/protocol/openid-connect/token"
-                            .to_string(),
-                    )
+                    TokenUrl::new(format!(
+                        "{}/realms/inferx/protocol/openid-connect/token",
+                        &keycloakUrl
+                    ))
                     .unwrap(),
                 ),
             );

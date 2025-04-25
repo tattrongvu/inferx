@@ -37,22 +37,41 @@ from authlib.common.security import generate_token
 
 from threading import Thread
 
+import logging
+import sys
+
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+
+
+logger = logging.getLogger('gunicorn.error')
+sys.stdout = sys.stderr = logger.handlers[0].stream
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
-KEYCLOAK_URL = "http://192.168.0.22:1260"
-REALM_NAME = "inferx"
-CLIENT_ID = "infer_client"
-CLIENT_SECRET = "SJvfmGFViBNHsLfhkto4eRE0PnPhpyft"
 
-server_metadata_url = "{}//realms/inferx/.well-known/openid-configuration".format(KEYCLOAK_URL)
+KEYCLOAK_URL = os.getenv('KEYCLOAK_URL', "http://192.168.0.22:81/authn")
+KEYCLOAK_REALM_NAME = os.getenv('KEYCLOAK_REALM_NAME', "inferx")
+KEYCLOAK_CLIENT_ID = os.getenv('KEYCLOAK_CLIENT_ID', "infer_client")
+KEYCLOAK_CLIENT_SECRET = os.getenv('KEYCLOAK_CLIENT_SECRET', "SJvfmGFViBNHsLfhkto4eRE0PnPhpyft")
+
+server_metadata_url = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM_NAME}/.well-known/openid-configuration"
 
 oauth = OAuth(app)
+app.wsgi_app = ProxyFix(
+    app.wsgi_app, 
+    x_for=1,       # Number of trusted proxy hops
+    x_proto=1,     # Trust X-Forwarded-Proto (HTTP/HTTPS)
+    x_host=1,      # Trust X-Forwarded-Host (external host)
+    x_port=1,      # Trust X-Forwarded-Port (external port)
+    x_prefix=1  
+)
 
 keycloak = oauth.register(
     name='keycloak',
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET,
+    client_id=KEYCLOAK_CLIENT_ID,
+    client_secret=KEYCLOAK_CLIENT_SECRET,
     server_metadata_url=server_metadata_url,
     client_kwargs={
         'scope': 'openid email profile',
@@ -60,7 +79,7 @@ keycloak = oauth.register(
     }
 )
 
-tls = True
+tls = False
 
 apihostaddr = "http://localhost:4000"
 # apihostaddr = "https://quarksoft.io:4000"
@@ -164,7 +183,7 @@ def auth_callback():
 def logout():
     # Keycloak logout endpoint
     end_session_endpoint = (
-        f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/logout"
+        f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM_NAME}/protocol/openid-connect/logout"
     )
     
     id_token = session.get('id_token', '')
@@ -352,7 +371,6 @@ def GetFailLogs(tenant: str, namespace: str, funcname: str, revision: int):
         apihostaddr, tenant, namespace, funcname, revision
     )
     resp = requests.get(url, headers=headers)
-    print("GetFailLogs  ", resp.content)
     fails = json.loads(resp.content)
     return fails
 
