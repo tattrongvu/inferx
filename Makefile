@@ -50,7 +50,7 @@ run:
 	sudo docker compose -f docker-compose.yml up -d --remove-orphans
 
 runblob:
-	sudo pkill -9 inferx
+	-sudo pkill -9 inferx
 	@echo "LOCAL_IP=$$(hostname -I | awk '{print $$1}' | xargs)" > .env
 	sudo docker compose -f docker-compose_blob.yml  build
 	- sudo rm -f /opt/inferx/log/inferx.log

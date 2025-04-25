@@ -12,7 +12,7 @@
             ],
             "resources": {
                 "CPU": 12000,
-                "Mem": 18000,
+                "Mem": 20000,
                 "GPU": {
                     "Type": "Any",
                     "Count": 1,
