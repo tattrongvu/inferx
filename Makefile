@@ -5,9 +5,9 @@ LOCAL_IP=${hostname -I | awk '{print $$1}' | xargs}
 all: ctl dash spdk runmodel
 
 ctl:	
-	cargo +stable build --bin ixctl
+	cargo +stable build --bin ixctl --release
 	sudo cp -f ixctl_logging_config.yaml /opt/inferx/config/
-	sudo cp -f target/debug/ixctl /opt/inferx/bin/
+	sudo cp -f target/release/ixctl /opt/inferx/bin/
 
 dash:
 	mkdir -p ./target/dashboard
@@ -44,10 +44,13 @@ sql:
 	sudo cp ./dashboard/sql/secret.sql /opt/inferx/config
 
 run:
+	-sudo pkill -9 inferx
+	@echo "LOCAL_IP=$$(hostname -I | awk '{print $$1}' | xargs)" > .env
 	sudo docker compose -f docker-compose.yml  build
 	- sudo rm -f /opt/inferx/log/inferx.log
 	- sudo rm -f /opt/inferx/log/onenode.log
 	sudo docker compose -f docker-compose.yml up -d --remove-orphans
+	rm .env
 
 runblob:
 	-sudo pkill -9 inferx
