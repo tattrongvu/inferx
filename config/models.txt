@@ -1,7 +1,7 @@
 export KEYCLOAK_URL="http://localhost:1260/authn"
 export INFX_GATEWAY_URL="http://localhost:4000"
-export IFERX_APIKEY="51cc2329-4d24-4bf5-8314-cbd0158d9da6"
-export IFERX_SECRET="SJvfmGFViBNHsLfhkto4eRE0PnPhpyft"
+export IFERX_APIKEY="750631b2-fc74-41ae-9eec-9282bf01f41d"
+export IFERX_SECRET="zvFEYdM7hFHYZxx4Rk5ruYJLEjRhAR78"
 export IFERX_USERNAME="testuser1"
 export IFERX_PASSWORD="test"
 /opt/inferx/bin/ixctl create public.json

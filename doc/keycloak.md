@@ -14,3 +14,13 @@
     d. Enable "Direct Access Grants Enabled"
 3. Update KEYCLOAK_CLIENT_SECRET in docker-compose_blob.yml
 4. Update the KEYCLOAK_URL with local address
+
+
+curl -X POST "http://192.168.0.22:1260/authn/realms/inferx/protocol/openid-connect/token" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "client_id=infer_client" \
+     -d "client_secret=M2Dse5531tdtyipZdGizLEeoOVgziQRX" \
+     -d "username=testuser1" \
+     -d "password=test" \
+     -d "grant_type=password"
+
