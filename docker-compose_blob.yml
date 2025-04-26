@@ -76,6 +76,8 @@ services:
         condition: service_started
       etcd:
         condition: service_started
+      keycloak:
+        condition: service_started
       spdk:
         condition: service_completed_successfully
     volumes:
@@ -105,7 +107,7 @@ services:
       - KEYCLOAK_URL=http://${LOCAL_IP}:81/authn
       - KEYCLOAK_REALM_NAME=inferx
       - KEYCLOAK_CLIENT_ID=infer_client
-      - KEYCLOAK_CLIENT_SECRET=SJvfmGFViBNHsLfhkto4eRE0PnPhpyft
+      - KEYCLOAK_CLIENT_SECRET=M2Dse5531tdtyipZdGizLEeoOVgziQRX
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:1250/listnode" ]
       interval: 10s
