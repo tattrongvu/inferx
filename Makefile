@@ -5,9 +5,9 @@ LOCAL_IP=${hostname -I | awk '{print $$1}' | xargs}
 all: ctl dash spdk runmodel
 
 ctl:	
-	cargo +stable build --bin ixctl
+	cargo +stable build --bin ixctl --release
 	sudo cp -f ixctl_logging_config.yaml /opt/inferx/config/
-	sudo cp -f target/debug/ixctl /opt/inferx/bin/
+	sudo cp -f target/release/ixctl /opt/inferx/bin/
 
 dash:
 	mkdir -p ./target/dashboard

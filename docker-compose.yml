@@ -31,7 +31,7 @@ services:
     ports:
       - '2379:2379'
       - '2380:2380'
-  ffly:
+  inferx:
     image: inferx/inferx_one:v0.1.0
     restart: on-failure
     container_name: inferx_one
@@ -50,6 +50,10 @@ services:
         condition: service_started
       etcd:
         condition: service_started
+      keycloak:
+        condition: service_started
+      spdk:
+        condition: service_completed_successfully
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /run/udev:/run/udev
@@ -73,8 +77,13 @@ services:
     restart: on-failure
     container_name: inferx_dashboard
     network_mode: "host"
+    environment:
+      - KEYCLOAK_URL=http://${LOCAL_IP}:81/authn
+      - KEYCLOAK_REALM_NAME=inferx
+      - KEYCLOAK_CLIENT_ID=infer_client
+      - KEYCLOAK_CLIENT_SECRET=M2Dse5531tdtyipZdGizLEeoOVgziQRX
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:1250/intro?name=home.md" ]
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:1250/listnode" ]
       interval: 10s
       timeout: 10s
       retries: 3
@@ -83,9 +92,9 @@ services:
       - etcd
     volumes:
       - /etc/letsencrypt/:/etc/letsencrypt/
-      - /opt/public/:/public/
   keycloak-postgres:
     image: postgres:14.5
+
     restart: unless-stopped
     container_name: keycloak_db
     environment:
@@ -113,6 +122,13 @@ services:
       - KC_DB_URL=jdbc:postgresql://keycloak-postgres:5432/keycloak
       - KC_DB_USERNAME=keycloak
       - KC_DB_PASSWORD=123456
+      - KC_PROXY=edge
+      - KC_HTTP_ENABLED=true
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HOSTNAME_STRICT=false
+      - KC_PROXY_ADDRESS_FORWARDING=true
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_HTTP_RELATIVE_PATH=/authn
     depends_on:
       keycloak-postgres:
         condition: service_started
