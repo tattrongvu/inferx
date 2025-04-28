@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e  # exit immediately if any command fails
+
+echo "Generating NVMe config..."
+scripts/gen_nvme.sh --json-with-subsystems > /opt/inferx/config/nvme_bdev_all.json
+sleep 1
+echo "Running SPDK setup..."
+scripts/setup.sh
+sleep 1
+scripts/gen_nvme.sh --json-with-subsystems > /opt/inferx/config/nvme_bdev_all.json
+sleep 1
+scripts/setup.sh
+echo "SPDK setup complete."
+
+exit 0
