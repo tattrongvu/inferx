@@ -1,10 +1,15 @@
 export KEYCLOAK_URL="http://localhost:1260/authn"
 export INFX_GATEWAY_URL="http://localhost:4000"
-export IFERX_APIKEY="750631b2-fc74-41ae-9eec-9282bf01f41d"
-export IFERX_SECRET="zvFEYdM7hFHYZxx4Rk5ruYJLEjRhAR78"
+export IFERX_APIKEY="83cc7434-0cce-4219-9a51-3f345f0f9a9e"
+
+export IFERX_SECRET="M2Dse5531tdtyipZdGizLEeoOVgziQRX"
 export IFERX_USERNAME="testuser1"
 export IFERX_PASSWORD="test"
+
 /opt/inferx/bin/ixctl create public.json
+
+/opt/inferx/bin/ixctl delete tenant system system public
+
 
 #######################################################
 /opt/inferx/bin/ixctl create TinyLlama_namespace.json

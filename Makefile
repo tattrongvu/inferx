@@ -39,6 +39,20 @@ spdk:
 	-sudo docker image rm inferx/spdk-container:v0.1.0
 	sudo docker build -t inferx/spdk-container:v0.1.0 ./target/spdk
 
+spdk2:
+	mkdir -p ./target/spdk
+	-rm ./target/spdk/* -rf
+	cp ./deployment/spdk2.Dockerfile ./target/spdk/Dockerfile
+	cp ./deployment/spdk.script ./target/spdk/entrypoint.sh
+	-sudo docker image rm inferx/spdk-container2:v0.1.0
+	sudo docker build -t inferx/spdk-container2:v0.1.0 ./target/spdk
+
+pushspdk:
+	# sudo docker login -u inferx
+	sudo docker tag inferx/spdk-container:v0.1.0 inferx/spdk-container:v0.1.0
+	sudo docker push inferx/spdk-container:v0.1.0
+	sudo docker tag inferx/spdk-container2:v0.1.0 inferx/spdk-container2:v0.1.0
+	sudo docker push inferx/spdk-container2:v0.1.0
 sql:
 	sudo cp ./dashboard/sql/create_table.sql /opt/inferx/config
 	sudo cp ./dashboard/sql/secret.sql /opt/inferx/config
