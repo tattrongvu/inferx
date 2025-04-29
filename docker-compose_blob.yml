@@ -1,7 +1,7 @@
 services:
   spdk:
     image: inferx/spdk-container2:v0.1.0
-    restart: no
+    restart: always
     container_name: spdk
     privileged: true
     environment:
@@ -79,7 +79,7 @@ services:
       keycloak:
         condition: service_started
       spdk:
-        condition: service_completed_successfully
+        condition: service_started
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /run/udev:/run/udev

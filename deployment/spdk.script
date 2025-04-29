@@ -12,4 +12,4 @@ sleep 1
 scripts/setup.sh
 echo "SPDK setup complete."
 
-exit 0
+while true; do sleep 86400; done
