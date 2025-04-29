@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: inferx-one
+  namespace: inferx
+spec:
+  selector:
+    app: inferx-one
+  ports:
+  - port: 4000
+    targetPort: 4000
+    name: api
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inferx-config
+  namespace: inferx
+data:
+  node1.json: |
+    {
+      # Configuration will be provided during setup
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inferx-one
+  namespace: inferx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inferx-one
+  template:
+    metadata:
+      labels:
+        app: inferx-one
+    spec:
+      containers:
+      - name: inferx-one
+        image: inferx/inferx_one:v0.1.0
+        args:
+        - ./onenode
+        - /opt/inferx/config/node1.json
+        ports:
+        - containerPort: 4000
+          name: api
+        env:
+        - name: DATABASE_URL
+          value: "postgres://audit_user:$(AUDIT_DB_PASSWORD)@audit-db:5432/auditdb"
+        - name: SECRET_DB_URL
+          value: "postgres://secret:$(SECRET_DB_PASSWORD)@secret-db:5432/secretdb"
+        envFrom:
+        - secretRef:
+            name: inferx-secrets
+        volumeMounts:
+        - name: inferx-config
+          mountPath: /opt/inferx/config
+        - name: inferx-data
+          mountPath: /opt/inferx/data
+        - name: inferx-bin
+          mountPath: /opt/inferx/bin
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "10"
+        securityContext:
+          privileged: true
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 4000
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 20
+      volumes:
+      - name: inferx-config
+        configMap:
+          name: inferx-config
+      - name: inferx-data
+        persistentVolumeClaim:
+          claimName: inferx-data-pvc
+      - name: inferx-bin
+        persistentVolumeClaim:
+          claimName: inferx-bin-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: inferx-data-pvc
+  namespace: inferx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: inferx-bin-pvc
+  namespace: inferx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi

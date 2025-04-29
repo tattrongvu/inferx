@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-db
+  namespace: inferx
+spec:
+  selector:
+    app: keycloak-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keycloak-db-pvc
+  namespace: inferx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keycloak-db
+  namespace: inferx
+spec:
+  serviceName: "keycloak-db"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak-db
+  template:
+    metadata:
+      labels:
+        app: keycloak-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:14.5
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "keycloak"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: inferx-secrets
+              key: keycloak-db-password
+        - name: POSTGRES_DB
+          value: "keycloak"
+        - name: PGDATA
+          value: "/data/postgres"
+        volumeMounts:
+        - name: keycloak-db-data
+          mountPath: /data/postgres
+      volumes:
+      - name: keycloak-db-data
+        persistentVolumeClaim:
+          claimName: keycloak-db-pvc

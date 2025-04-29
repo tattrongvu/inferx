@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: audit-db-init
+  namespace: inferx
+data:
+  create_table.sql: |
+    -- Add your create_table.sql initialization script here
+    -- This file should be copied from /opt/inferx/config/create_table.sql

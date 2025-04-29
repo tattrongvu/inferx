@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-db
+  namespace: inferx
+spec:
+  selector:
+    app: audit-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: audit-db-pvc
+  namespace: inferx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: audit-db
+  namespace: inferx
+spec:
+  serviceName: "audit-db"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-db
+  template:
+    metadata:
+      labels:
+        app: audit-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:14.5
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "audit_user"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: inferx-secrets
+              key: audit-db-password
+        - name: POSTGRES_DB
+          value: "auditdb"
+        - name: PGDATA
+          value: "/data/postgres"
+        volumeMounts:
+        - name: audit-db-data
+          mountPath: /data/postgres
+        - name: init-sql
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: init-sql
+        configMap:
+          name: audit-db-init
+      - name: audit-db-data
+        persistentVolumeClaim:
+          claimName: audit-db-pvc
